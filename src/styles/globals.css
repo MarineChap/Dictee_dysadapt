@@ -1,0 +1,329 @@
+@import 'tailwindcss';
+
+/* ────────────────────────────────────────────────────────────────────────────
+   Dictadapt reuses the DysAdapt design system verbatim (tokens, dark palette,
+   WCAG override, animation utilities) so the two tools feel like one product.
+   Source: dysadapt/frontend/src/app/globals.css
+
+   Every font is self-hosted: the app must work with no network at all, so the
+   OpenDyslexic CDN URL used by DysAdapt is replaced by a local file here.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+/* UI font — Geist, same as DysAdapt (loaded there through next/font) */
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/Geist-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/Geist-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/Geist-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/Geist-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/Geist-800.woff2') format('woff2');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/Geist-900.woff2') format('woff2');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Accessibility fonts — the four DysAdapt profiles. v1 uses Andika everywhere;
+   the other three are bundled so the v2 font picker needs no new assets. */
+@font-face {
+  font-family: 'Andika';
+  src: url('/fonts/Andika-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Andika';
+  src: url('/fonts/Andika-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('/fonts/OpenDyslexic-Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('/fonts/OpenDyslexic-Bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Marelle';
+  src: url('/fonts/Marelle-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Luciole';
+  src: url('/fonts/Luciole-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Tailwind v4 defaults dark mode to a media query — switch it to the class
+   strategy so the theme toggle works. */
+@variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #ffffff;
+  /* Slate-950 */
+  --foreground: #0f172a;
+  /* Slate-500 */
+  --muted: #64748b;
+  /* Slate-50 */
+  --surface: #f8fafc;
+  /* Indigo-600 */
+  --primary: #4f46e5;
+  /* Indigo-700 */
+  --primary-hover: #4338ca;
+  /* Indigo-50 */
+  --primary-muted: #eef2ff;
+  /* Sky-500 */
+  --accent: #0ea5e9;
+  color-scheme: light;
+
+  /* Reading typography — v1 pins these to the most comfortable DysAdapt
+     profile. The v2 accessibility panel will rewrite them on <html>. */
+  --reading-font: 'Andika';
+  --reading-size: 20px;
+  --reading-line-height: 1.8;
+  --reading-letter-spacing: 0.05em;
+}
+
+.dark {
+  /* Soft Amethyst (Gentle & Elegant) */
+  --background: #171717;
+  /* Neutral-900 */
+  --surface: #262626;
+  /* Neutral-800 */
+
+  /* Off-white text for high readability */
+  --foreground: #f5f5f5;
+  /* Neutral-100 */
+
+  /* Muted text for hierarchy */
+  --muted: #a3a3a3;
+  /* Neutral-400 */
+
+  /* Soft Amethyst Primary — purple-500 gives 4.53:1 on dark bg (WCAG AA) */
+  --primary: #a855f7;
+  /* Purple-500 */
+  --primary-hover: #9333ea;
+  /* Purple-600 — darker on hover keeps white button text at 5.38:1 */
+  --primary-muted: rgba(168, 85, 247, 0.2);
+  /* Purple-500 with low opacity */
+  --accent: #f472b6;
+  /* Pink-400 */
+
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-surface: var(--surface);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-muted: var(--primary-muted);
+  --color-accent: var(--accent);
+  --font-sans: 'Geist';
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+  /* Children tap a lot and fast — kill the 300 ms delay and the blue flash. */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Responsive Spacing Utilities */
+@layer utilities {
+  .container-px {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+
+  .thumb-zone-nav {
+    @apply fixed bottom-0 left-0 right-0 p-4 pb-8 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 z-50;
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .breadcrumb-step {
+    @apply flex items-center text-[10px] font-black uppercase tracking-widest transition-all;
+  }
+
+  /* Applied to any text a struggling reader has to decode. */
+  .reading-text {
+    font-family: var(--reading-font), 'Andika', sans-serif;
+    font-size: var(--reading-size);
+    line-height: var(--reading-line-height);
+    letter-spacing: var(--reading-letter-spacing);
+  }
+}
+
+/* ── OCR scanner sweep (from DysAdapt) ─────────────────────────────────────── */
+@keyframes scanner-beam {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(400%);
+    opacity: 0;
+  }
+}
+
+.scanner-beam-active {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(to right, transparent, var(--primary), transparent);
+  box-shadow: 0 0 15px var(--primary);
+  z-index: 10;
+  animation: scanner-beam 3s ease-in-out infinite;
+}
+
+@keyframes success-pop {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+
+  50% {
+    transform: scale(1.1);
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-success {
+  animation: success-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* ── Attention pulse — draws the eye to the segment currently being read. */
+@keyframes attention-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
+  }
+  50% {
+    box-shadow:
+      0 0 0 6px rgba(79, 70, 229, 0.18),
+      0 0 20px 4px rgba(79, 70, 229, 0.12);
+  }
+}
+
+@keyframes attention-pulse-dark {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(168, 85, 247, 0);
+  }
+  50% {
+    box-shadow:
+      0 0 0 6px rgba(168, 85, 247, 0.24),
+      0 0 20px 4px rgba(168, 85, 247, 0.16);
+  }
+}
+
+.attention-pulse {
+  animation: attention-pulse 1.6s ease-in-out infinite;
+}
+
+:where(.dark, .dark *) .attention-pulse {
+  animation-name: attention-pulse-dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .attention-pulse,
+  .scanner-beam-active,
+  .animate-success {
+    animation: none;
+  }
+}
+
+/* Smooth State Transitions */
+.slide-enter {
+  transform: translateX(20px);
+  opacity: 0;
+}
+
+.slide-enter-active {
+  transform: translateX(0);
+  opacity: 1;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── WCAG AA: dark-mode background fix ──────────────────────────────────────
+   --primary (purple-500) is calibrated for text/icons on the dark bg (4.53:1).
+   It is too light for white text on opaque backgrounds (3.96:1 — fails AA).
+   Override all bg-primary *and* hover:bg-primary surfaces in dark mode to
+   purple-700 (#7e22ce), giving white text 6.98:1 (AA, near-AAA).
+   hover:bg-primary-hover stays at purple-600 via the CSS variable (5.38:1 ✓).
+   ─────────────────────────────────────────────────────────────────────────── */
+:where(.dark, .dark *) .bg-primary,
+:where(.dark, .dark *) .hover\:bg-primary:hover {
+  background-color: #7e22ce; /* purple-700 */
+}
