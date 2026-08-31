@@ -76,6 +76,7 @@ export default function ModeEleve() {
       speak(text, {
         rate: dictation.speech.rate,
         voiceURI: dictation.speech.voiceURI,
+        speakPunctuation: dictation.speech.speakPunctuation ?? true,
         onEnd: () => {
           setSpeakingId((current) => (current === segmentId ? null : current));
           if (dictation.speech.repeatAfterMs > 0) {

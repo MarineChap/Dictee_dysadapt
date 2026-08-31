@@ -14,6 +14,12 @@ export interface SpeechSettings {
    * pupil can keep writing instead of reaching for the screen. 0 disables it.
    */
   repeatAfterMs: number;
+  /**
+   * Says the punctuation out loud ("virgule", "point"…), the way a teacher
+   * dictates it, so the pupil knows where the marks go. Undefined on
+   * dictations saved before this option existed, which read as enabled.
+   */
+  speakPunctuation?: boolean;
 }
 
 export interface Dictation {
@@ -47,6 +53,7 @@ export interface Progress {
 export const DEFAULT_SPEECH: SpeechSettings = {
   rate: 0.85,
   repeatAfterMs: 0,
+  speakPunctuation: true,
 };
 
 /** Global preferences, kept in localStorage (small, synchronous, no blobs). */

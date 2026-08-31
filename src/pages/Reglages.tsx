@@ -33,6 +33,7 @@ export default function Reglages() {
               speak('Le petit chat noir dormait sur le fauteuil.', {
                 rate: settings.speech.rate,
                 voiceURI: settings.speech.voiceURI,
+                speakPunctuation: settings.speech.speakPunctuation ?? true,
               })
             }
           />

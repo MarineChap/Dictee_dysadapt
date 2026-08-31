@@ -134,7 +134,11 @@ export default function DicteeDetail() {
             })
           }
           onPreview={(text) =>
-            speak(text, { rate: dictation.speech.rate, voiceURI: dictation.speech.voiceURI })
+            speak(text, {
+              rate: dictation.speech.rate,
+              voiceURI: dictation.speech.voiceURI,
+              speakPunctuation: dictation.speech.speakPunctuation ?? true,
+            })
           }
         />
       </section>
@@ -147,6 +151,7 @@ export default function DicteeDetail() {
             speak(dictation.segments[0]?.text ?? 'Bonjour', {
               rate: dictation.speech.rate,
               voiceURI: dictation.speech.voiceURI,
+              speakPunctuation: dictation.speech.speakPunctuation ?? true,
             })
           }
         />

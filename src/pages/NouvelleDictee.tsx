@@ -343,7 +343,11 @@ export default function NouvelleDictee() {
             segments={segments}
             onChange={setSegments}
             onPreview={(segment) =>
-              speak(segment, { rate: speech.rate, voiceURI: speech.voiceURI })
+              speak(segment, {
+                rate: speech.rate,
+                voiceURI: speech.voiceURI,
+                speakPunctuation: speech.speakPunctuation ?? true,
+              })
             }
           />
 
@@ -385,6 +389,7 @@ export default function NouvelleDictee() {
               speak(segments[0] ?? 'Bonjour', {
                 rate: speech.rate,
                 voiceURI: speech.voiceURI,
+                speakPunctuation: speech.speakPunctuation ?? true,
               })
             }
           />

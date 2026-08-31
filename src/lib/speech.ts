@@ -97,9 +97,36 @@ export function hasOfflineFrenchVoice(): boolean {
   return frenchVoices().some((v) => v.localService);
 }
 
+/**
+ * Rewrites punctuation as the words a teacher says out loud during a dictation
+ * ("virgule", "point d'interrogation"…), so the pupil hears where the marks go
+ * instead of only a silent pause. Apostrophes and hyphens inside words are left
+ * untouched — they belong to the spelling and are not dictated.
+ */
+export function spellPunctuation(text: string): string {
+  return text
+    .replace(/\.\.\.|…/g, ' points de suspension ')
+    .replace(/,/g, ' virgule ')
+    .replace(/;/g, ' point-virgule ')
+    .replace(/:/g, ' deux-points ')
+    .replace(/\?/g, " point d'interrogation ")
+    .replace(/!/g, " point d'exclamation ")
+    .replace(/«/g, ' ouvrez les guillemets ')
+    .replace(/»/g, ' fermez les guillemets ')
+    .replace(/\(/g, ' ouvrez la parenthèse ')
+    .replace(/\)/g, ' fermez la parenthèse ')
+    .replace(/[—–]/g, ' tiret ')
+    // Only a period ending a word/sentence, never a decimal point (3.5).
+    .replace(/\.(?=\s|$)/g, ' point ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 export interface SpeakOptions {
   rate?: number;
   voiceURI?: string;
+  /** Say the punctuation aloud. Defaults to true. */
+  speakPunctuation?: boolean;
   onEnd?: () => void;
   onError?: () => void;
 }
@@ -118,8 +145,9 @@ export function cancelSpeech(): void {
  * taps twice wants to hear it again from the start, not two overlapping voices.
  */
 export function speak(text: string, options: SpeakOptions = {}): void {
-  const { rate = 0.85, voiceURI, onEnd, onError } = options;
-  const trimmed = text.trim();
+  const { rate = 0.85, voiceURI, speakPunctuation = true, onEnd, onError } = options;
+  const spoken = speakPunctuation ? spellPunctuation(text) : text;
+  const trimmed = spoken.trim();
   if (!trimmed) {
     onEnd?.();
     return;

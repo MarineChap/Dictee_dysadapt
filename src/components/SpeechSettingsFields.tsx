@@ -103,6 +103,24 @@ export default function SpeechSettingsFields({
         />
       </div>
 
+      <label className="flex items-start gap-3 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={value.speakPunctuation ?? true}
+          onChange={(event) => onChange({ ...value, speakPunctuation: event.target.checked })}
+          className="mt-1 w-5 h-5 rounded accent-[var(--primary)]"
+        />
+        <span>
+          <span className="block text-sm font-bold text-slate-800 dark:text-slate-100">
+            Lire la ponctuation
+          </span>
+          <span className="block text-xs text-slate-500 dark:text-slate-400">
+            Annonce « virgule », « point »… à voix haute, comme en vraie dictée, pour que
+            l&apos;élève sache où placer les signes.
+          </span>
+        </span>
+      </label>
+
       <div>
         <label
           htmlFor="pause"
