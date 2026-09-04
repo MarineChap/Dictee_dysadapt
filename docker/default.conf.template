@@ -1,0 +1,52 @@
+# Rendered into /etc/nginx/conf.d/default.conf at container start (envsubst on
+# ${DICTEE_PORT}). Only ${DICTEE_PORT} is substituted — NGINX_ENVSUBST_FILTER in
+# the Dockerfile keeps nginx's own $uri and friends untouched.
+
+server {
+    listen       ${DICTEE_PORT};
+    listen  [::]:${DICTEE_PORT};
+    server_name  _;
+
+    root  /usr/share/nginx/html;
+    index index.html;
+
+    # The reverse proxy in front (Caddy `handle_path /dictee/*`, or the port
+    # directly in local dev) strips the sub-path, so paths arrive at the root
+    # even though the bundle was built with VITE_BASE=/dictee/.
+
+    # Vite hashes every asset filename, so those can be cached forever. The
+    # entry point and the service worker must not be, or a redeploy would never
+    # reach a browser that already has the app installed.
+    location /assets/ {
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+
+    location = /index.html {
+        add_header Cache-Control "no-cache";
+    }
+
+    location = /sw.js {
+        add_header Cache-Control "no-cache";
+    }
+
+    location = /manifest.webmanifest {
+        add_header Cache-Control "no-cache";
+    }
+
+    # HashRouter keeps every route behind `#`, so this only catches a reload on
+    # the app root — but the PWA precache and navigate fallback need it there.
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # The Tesseract model ships pre-compressed (fra.traineddata.gz) and
+    # tesseract.js inflates it itself, so it must go out untouched: no
+    # Content-Encoding, no second pass through gzip. Everything else compresses
+    # well and is worth the CPU.
+    gzip              on;
+    gzip_vary         on;
+    gzip_min_length   1024;
+    gzip_proxied      any;
+    gzip_types        text/plain text/css application/javascript application/json
+                      image/svg+xml application/manifest+json application/wasm;
+}

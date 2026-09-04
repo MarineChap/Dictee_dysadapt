@@ -1,0 +1,17 @@
+# Keep the build context small and reproducible: public/ (the Tesseract model,
+# the fonts) is vendored and must stay, everything generated must not.
+.git
+.github
+node_modules
+dist
+dist-ssr
+dev-dist
+coverage
+android
+*.apk
+*.aab
+*.keystore
+*.jks
+*.tsbuildinfo
+public/sw.js
+public/workbox-*.js
