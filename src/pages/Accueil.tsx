@@ -1,11 +1,22 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { BookOpenCheck, Camera, Copy, Play, Plus, QrCode, Settings, Trash2 } from 'lucide-react';
+import {
+  BookOpenCheck,
+  Camera,
+  Copy,
+  Headphones,
+  Play,
+  Plus,
+  QrCode,
+  Settings,
+  Trash2,
+} from 'lucide-react';
 import { nanoid } from 'nanoid';
 import PageShell from '@/components/PageShell';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { useDictations } from '@/hooks/useDictations';
 import { deleteDictation, saveDictation } from '@/lib/db';
+import { isReceived } from '@/lib/types';
 import type { Dictation } from '@/lib/types';
 
 function formatDate(timestamp: number): string {
@@ -30,6 +41,7 @@ export default function Accueil() {
       createdAt: now,
       updatedAt: now,
       imageId: undefined,
+      origin: 'created',
     });
     refresh();
   }
@@ -124,48 +136,66 @@ export default function Accueil() {
 
       {!loading && !error && dictations.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2">
-          {dictations.map((dictation) => (
-            <div
-              key={dictation.id}
-              className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 hover:shadow-lg hover:border-primary-hover transition-all group flex flex-col"
-            >
-              <Link to={`/dictee/${dictation.id}`} className="flex-1 min-w-0">
-                <h3 className="font-black text-slate-900 dark:text-white tracking-tight truncate">
-                  {dictation.title}
-                </h3>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mt-1">
-                  {dictation.segments.length} parties · {formatDate(dictation.createdAt)}
-                </p>
-              </Link>
+          {dictations.map((dictation) => {
+            // A dictation received by QR code has no teacher side on this
+            // device: the card opens pupil mode, and there is nothing to edit,
+            // to duplicate or to hand on.
+            const received = isReceived(dictation);
 
-              <div className="flex items-center gap-2 mt-5">
-                <button
-                  type="button"
-                  onClick={() => navigate(`/eleve/${dictation.id}`)}
-                  className="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-primary-muted"
+            return (
+              <div
+                key={dictation.id}
+                className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 hover:shadow-lg hover:border-primary-hover transition-all group flex flex-col"
+              >
+                <Link
+                  to={received ? `/eleve/${dictation.id}` : `/dictee/${dictation.id}`}
+                  className="flex-1 min-w-0"
                 >
-                  <Play className="w-4 h-4" />
-                  Donner à l&apos;élève
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void duplicate(dictation)}
-                  aria-label={`Dupliquer ${dictation.title}`}
-                  className="p-2.5 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-                >
-                  <Copy className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPendingDelete(dictation)}
-                  aria-label={`Supprimer ${dictation.title}`}
-                  className="p-2.5 rounded-xl text-slate-400 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                  <h3 className="font-black text-slate-900 dark:text-white tracking-tight truncate">
+                    {dictation.title}
+                  </h3>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mt-1">
+                    {dictation.segments.length} parties · {formatDate(dictation.createdAt)}
+                  </p>
+                  {received && (
+                    <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary-muted px-3 py-1 text-[10px] font-black uppercase tracking-widest text-primary">
+                      <QrCode className="w-3.5 h-3.5" />
+                      Reçue par QR code
+                    </span>
+                  )}
+                </Link>
+
+                <div className="flex items-center gap-2 mt-5">
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/eleve/${dictation.id}`)}
+                    className="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-primary-muted"
+                  >
+                    {received ? <Headphones className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                    {received ? 'Écouter la dictée' : "Donner à l'élève"}
+                  </button>
+                  {!received && (
+                    <button
+                      type="button"
+                      onClick={() => void duplicate(dictation)}
+                      aria-label={`Dupliquer ${dictation.title}`}
+                      className="p-2.5 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setPendingDelete(dictation)}
+                    aria-label={`Supprimer ${dictation.title}`}
+                    className="p-2.5 rounded-xl text-slate-400 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           <Link
             to="/nouvelle"

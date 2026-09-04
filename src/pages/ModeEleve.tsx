@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { Check, RotateCcw, Volume2 } from 'lucide-react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, Check, RotateCcw, Volume2 } from 'lucide-react';
 import DictadaptLogo from '@/components/DictadaptLogo';
 import ExitLock from '@/components/ExitLock';
 import { clearProgress, getDictation, getProgress, saveProgress } from '@/lib/db';
 import { cancelSpeech, speak } from '@/lib/speech';
 import { countWords } from '@/lib/segment';
 import { readSettings } from '@/lib/storage';
+import { isReceived } from '@/lib/types';
 import type { Dictation } from '@/lib/types';
 
 /**
@@ -16,6 +17,12 @@ import type { Dictation } from '@/lib/types';
  * the text: this is a dictation, the child listens and writes. Tapping plays
  * the part; tapping again replays it, as many times as needed. A part that has
  * been heard turns green, so the child always knows where they are.
+ *
+ * How the screen is left depends on where the dictation comes from. One created
+ * here has a teacher screen behind it, with the text in clear: the way out is
+ * the lock — a two-second press, plus the code if the teacher set one. One
+ * received by QR code holds nothing but the parts, so there is nothing to
+ * protect and the pupil goes back to their library with an ordinary arrow.
  */
 export default function ModeEleve() {
   const { id } = useParams<{ id: string }>();
@@ -136,6 +143,8 @@ export default function ModeEleve() {
     );
   }
 
+  // No teacher screen behind a received copy, so no lock in front of it.
+  const received = isReceived(dictation);
   const total = dictation.segments.length;
   const done = dictation.segments.filter((segment) => listened.has(segment.id)).length;
   const finished = done === total && total > 0;
@@ -148,7 +157,18 @@ export default function ModeEleve() {
           <p className="flex-1 min-w-0 text-center font-black text-slate-900 dark:text-white tracking-tight truncate">
             {dictation.title}
           </p>
-          <ExitLock code={exitCode} onExit={() => navigate(`/dictee/${dictation.id}`)} />
+          {received ? (
+            <Link
+              to="/"
+              aria-label="Revenir à mes dictées"
+              className="flex items-center gap-2 px-3 py-2 -mr-1 rounded-xl text-sm font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 flex-shrink-0" />
+              <span className="hidden sm:inline">Mes dictées</span>
+            </Link>
+          ) : (
+            <ExitLock code={exitCode} onExit={() => navigate(`/dictee/${dictation.id}`)} />
+          )}
         </div>
       </header>
 

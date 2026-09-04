@@ -41,6 +41,26 @@ export interface Dictation {
   allowReveal: boolean;
   /** Key into the `blobs` store holding the source photo. Teacher side only. */
   imageId?: string;
+  /**
+   * Where this copy comes from, and therefore what can be done with it:
+   *
+   * - `created` — photographed and cut up on this device. Its owner is the
+   *   teacher: they get the detail screen, the text, the QR code.
+   * - `received` — scanned from a teacher's QR code. It carries the parts and
+   *   nothing else, so there is no teacher screen for it and the pupil simply
+   *   walks back to the library — no long press, no exit code.
+   *
+   * Undefined on dictations saved before the distinction existed: those were
+   * all created locally, so they read as `created`.
+   */
+  origin?: DictationOrigin;
+}
+
+export type DictationOrigin = 'created' | 'received';
+
+/** True for a copy scanned from a QR code: pupil screen only, nothing to hide. */
+export function isReceived(dictation: Pick<Dictation, 'origin'>): boolean {
+  return dictation.origin === 'received';
 }
 
 /** Which parts the pupil has already listened to. Survives closing the app. */
@@ -61,7 +81,10 @@ export interface Settings {
   theme: 'light' | 'dark' | 'system';
   /** Default reading settings applied to newly created dictations. */
   speech: SpeechSettings;
-  /** 4 digits. When set, leaving pupil mode asks for it. Empty = long-press only. */
+  /**
+   * 4 digits. When set, leaving pupil mode asks for it — but only on a dictation
+   * created here, whose teacher screen shows the text. Empty = long-press only.
+   */
   exitCode: string;
 }
 

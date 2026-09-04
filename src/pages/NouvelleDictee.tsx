@@ -150,6 +150,7 @@ export default function NouvelleDictee() {
         showWordCount,
         allowReveal,
         imageId,
+        origin: 'created',
       });
 
       await terminateOcr();

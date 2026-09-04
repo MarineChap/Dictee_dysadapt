@@ -7,8 +7,17 @@ import SegmentEditor from '@/components/SegmentEditor';
 import SpeechSettingsFields from '@/components/SpeechSettingsFields';
 import { getDictation, saveDictation } from '@/lib/db';
 import { cancelSpeech, speak } from '@/lib/speech';
+import { isReceived } from '@/lib/types';
 import type { Dictation } from '@/lib/types';
 
+/**
+ * The teacher's screen: the text in clear, the cut-up, the reading settings and
+ * the QR code to hand the dictation over.
+ *
+ * It belongs to whoever made the dictation. A copy received by QR code has no
+ * teacher side — it holds the parts and nothing else — so it is sent straight
+ * back to pupil mode, including when the address is typed by hand.
+ */
 export default function DicteeDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -25,13 +34,20 @@ export default function DicteeDetail() {
     let cancelled = false;
     void getDictation(id).then((found) => {
       if (cancelled) return;
-      if (found) setDictation(found);
-      else setNotFound(true);
+      if (!found) {
+        setNotFound(true);
+        return;
+      }
+      if (isReceived(found)) {
+        navigate(`/eleve/${found.id}`, { replace: true });
+        return;
+      }
+      setDictation(found);
     });
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, navigate]);
 
   useEffect(() => () => cancelSpeech(), []);
 

@@ -47,9 +47,10 @@ export default function Reglages() {
             <div className="flex items-start gap-3">
               <ShieldCheck className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
               <p className="text-sm text-slate-600 dark:text-slate-300">
-                Pour sortir du mode élève, il faut garder le cadenas appuyé{' '}
-                <span className="font-bold">deux secondes</span>. Ajoutez un code à quatre chiffres
-                si vos élèves ont compris l&apos;astuce.
+                Pour sortir du mode élève sur <span className="font-bold">vos</span> dictées, il
+                faut garder le cadenas appuyé <span className="font-bold">deux secondes</span> :
+                l&apos;écran enseignant qui se trouve derrière affiche le texte. Ajoutez un code à
+                quatre chiffres si vos élèves ont compris l&apos;astuce.
               </p>
             </div>
 
@@ -78,6 +79,12 @@ export default function Reglages() {
                     : 'Entrez les quatre chiffres pour activer le code.'}
               </p>
             </div>
+
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Sur l&apos;appareil de l&apos;élève, une dictée reçue par QR code ne contient que les
+              parties à écouter : il n&apos;y a rien à cacher, donc ni cadenas ni code — elle se
+              quitte comme n&apos;importe quel écran et reste rangée dans « Mes dictées ».
+            </p>
           </div>
         </section>
 

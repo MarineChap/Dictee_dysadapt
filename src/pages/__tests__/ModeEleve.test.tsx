@@ -18,14 +18,25 @@ const dictation: Dictation = {
   speech: { rate: 0.85, repeatAfterMs: 0 },
   showWordCount: true,
   allowReveal: false,
+  origin: 'created',
+};
+
+/** The same dictation as it lands on a pupil's device: parts, and nothing else. */
+const receivedDictation: Dictation = {
+  ...dictation,
+  id: 'test-2',
+  title: 'Dictée reçue',
+  sourceText: '',
+  origin: 'received',
 };
 
 const spoken: string[] = [];
 
-function renderPupilScreen() {
+function renderPupilScreen(id: string = dictation.id) {
   return render(
-    <MemoryRouter initialEntries={[`/eleve/${dictation.id}`]}>
+    <MemoryRouter initialEntries={[`/eleve/${id}`]}>
       <Routes>
+        <Route path="/" element={<p>mes dictées</p>} />
         <Route path="/eleve/:id" element={<ModeEleve />} />
         <Route path="/dictee/:id" element={<p>écran enseignant</p>} />
       </Routes>
@@ -60,9 +71,11 @@ beforeEach(async () => {
     }
   );
   await saveDictation(dictation);
+  await saveDictation(receivedDictation);
   // fake-indexeddb is shared across the tests in this file: a pupil's progress
   // from the previous test would otherwise leak into the next one.
   await clearProgress(dictation.id);
+  await clearProgress(receivedDictation.id);
 });
 
 describe('Mode élève', () => {
@@ -154,5 +167,33 @@ describe('Mode élève', () => {
     expect(
       screen.getByRole('button', { name: /Quitter le mode élève \(appui long/ })
     ).toBeInTheDocument();
+  });
+
+  /**
+   * A dictation received by QR code has no teacher screen behind it on this
+   * device, so locking the pupil in would only strand them.
+   */
+  describe('dictation received by QR code', () => {
+    it('lets the pupil walk back to the library without the lock', async () => {
+      const user = userEvent.setup();
+      renderPupilScreen(receivedDictation.id);
+      await screen.findByText('Partie 1');
+
+      expect(
+        screen.queryByRole('button', { name: /Quitter le mode élève/ })
+      ).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole('link', { name: 'Revenir à mes dictées' }));
+      expect(await screen.findByText('mes dictées')).toBeInTheDocument();
+    });
+
+    it('still keeps the text out of the DOM', async () => {
+      const { container } = renderPupilScreen(receivedDictation.id);
+      await screen.findByText('Partie 1');
+
+      for (const segment of SEGMENTS) {
+        expect(container.innerHTML).not.toContain(segment);
+      }
+    });
   });
 });

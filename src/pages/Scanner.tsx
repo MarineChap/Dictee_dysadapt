@@ -131,6 +131,9 @@ export default function Scanner() {
       speech: imported.speech,
       showWordCount: imported.showWordCount,
       allowReveal: imported.allowReveal,
+      // A received copy only ever opens in pupil mode. It stays in the library,
+      // so the pupil can come back to it without scanning the code again.
+      origin: 'received',
     });
     navigate(`/eleve/${id}`, { replace: true });
   }
@@ -147,8 +150,9 @@ export default function Scanner() {
               Scanner le QR code de l&apos;enseignant
             </p>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
-              La dictée est copiée sur cet appareil. Aucune connexion internet n&apos;est
-              nécessaire.
+              La dictée est copiée sur cet appareil et rangée dans « Mes dictées » : elle
+              s&apos;ouvre directement en mode élève, autant de fois que nécessaire. Aucune
+              connexion internet n&apos;est nécessaire.
             </p>
           </div>
           <button
@@ -222,7 +226,7 @@ export default function Scanner() {
                 {imported.title}
               </p>
               <p className="text-xs text-emerald-700 dark:text-emerald-300">
-                {imported.segments.length} parties reçues
+                {imported.segments.length} parties reçues · rangée dans « Mes dictées »
               </p>
             </div>
           </div>

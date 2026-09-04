@@ -21,6 +21,13 @@ These are the product, not implementation details. Do not break them:
 2. **The pupil never sees the dictation text.** `ModeEleve` renders part numbers only — no
    segment text may reach the DOM. `src/pages/__tests__/ModeEleve.test.tsx` guards this.
 3. **No login, no server.** Persistence is IndexedDB plus localStorage; transfer is a QR code.
+4. **A received dictation is pupil-only.** `Dictation.origin` says where a copy comes from:
+   `created` (photographed here — teacher screen, text, QR share) or `received` (scanned from a
+   QR code — the parts and nothing else). `DicteeDetail` bounces a received copy to `/eleve/:id`,
+   including on a hand-typed URL, and `ModeEleve` gives it a plain back arrow instead of the
+   `ExitLock`: with no text behind the screen there is nothing to lock. Copies saved before the
+   field existed have `origin` undefined and read as `created` — use `isReceived()`, never a raw
+   comparison. `src/pages/__tests__/DicteeDetail.test.tsx` guards the routing.
 
 ## Stack
 
