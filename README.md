@@ -51,7 +51,8 @@ Deux façons, toutes les deux hors ligne :
   ceux qui manquent encore. La photo n'est jamais transmise.
 
 Une dictée reçue par QR code est **rangée dans « Mes dictées »** sur l'appareil de l'élève : il la
-retrouve et la réécoute sans rescanner le code. Elle ne contient que les parties à écouter — pas de
+retrouve et la réécoute sans rescanner le code, et peut la **renommer** depuis sa bibliothèque
+(crayon sur la carte) — le renommage marche dans les deux modes. Elle ne contient que les parties à écouter — pas de
 texte, pas d'écran enseignant — donc elle s'ouvre **toujours en mode élève**, et elle se quitte par
 une simple flèche : ni appui long, ni code. Le cadenas et le code ne servent que sur vos propres
 dictées, celles dont l'écran enseignant affiche le texte.

@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import DicteeDetail from '../DicteeDetail';
-import { saveDictation } from '@/lib/db';
+import { getDictation, saveDictation } from '@/lib/db';
 import type { Dictation } from '@/lib/types';
 
 const SEGMENTS = ['Le petit chat', 'dormait sur le fauteuil,', 'près de la fenêtre.'];
@@ -67,6 +68,25 @@ describe('Écran enseignant', () => {
     for (const segment of SEGMENTS) {
       expect(container.innerHTML).not.toContain(segment);
     }
+  });
+
+  it('renames the dictation, the new name joining the save bar', async () => {
+    const user = userEvent.setup();
+    await saveDictation(makeDictation({ id: 'rename-1' }));
+    renderDetail('rename-1');
+
+    await user.click(await screen.findByRole('button', { name: 'Renommer la dictée' }));
+    const field = await screen.findByLabelText('Nom de la dictée');
+    await user.clear(field);
+    await user.type(field, 'Les accords du participe');
+    await user.click(screen.getByRole('button', { name: 'Renommer' }));
+
+    expect(await screen.findAllByText('Les accords du participe')).not.toHaveLength(0);
+
+    await user.click(screen.getByRole('button', { name: /Enregistrer/ }));
+    await waitFor(async () => {
+      expect((await getDictation('rename-1'))?.title).toBe('Les accords du participe');
+    });
   });
 
   it('treats a dictation saved before the distinction existed as the teacher’s own', async () => {

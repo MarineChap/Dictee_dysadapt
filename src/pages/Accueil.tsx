@@ -5,6 +5,7 @@ import {
   Camera,
   Copy,
   Headphones,
+  Pencil,
   Play,
   Plus,
   QrCode,
@@ -14,6 +15,7 @@ import {
 import { nanoid } from 'nanoid';
 import PageShell from '@/components/PageShell';
 import ConfirmDialog from '@/components/ConfirmDialog';
+import RenameDialog from '@/components/RenameDialog';
 import { useDictations } from '@/hooks/useDictations';
 import { deleteDictation, saveDictation } from '@/lib/db';
 import { isReceived } from '@/lib/types';
@@ -30,7 +32,19 @@ function formatDate(timestamp: number): string {
 export default function Accueil() {
   const { dictations, loading, error, refresh } = useDictations();
   const [pendingDelete, setPendingDelete] = useState<Dictation | null>(null);
+  const [pendingRename, setPendingRename] = useState<Dictation | null>(null);
   const navigate = useNavigate();
+
+  /**
+   * Renaming lives here rather than on the teacher screen so that it works in
+   * both modes: a pupil only ever sees the library and pupil mode, and a
+   * dictation called "Dictée reçue" is one they must be able to name.
+   */
+  async function rename(dictation: Dictation, title: string) {
+    await saveDictation({ ...dictation, title });
+    setPendingRename(null);
+    refresh();
+  }
 
   async function duplicate(dictation: Dictation) {
     const now = Date.now();
@@ -174,6 +188,14 @@ export default function Accueil() {
                     {received ? <Headphones className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                     {received ? 'Écouter la dictée' : "Donner à l'élève"}
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setPendingRename(dictation)}
+                    aria-label={`Renommer ${dictation.title}`}
+                    className="p-2.5 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
                   {!received && (
                     <button
                       type="button"
@@ -207,6 +229,14 @@ export default function Accueil() {
             </span>
           </Link>
         </div>
+      )}
+
+      {pendingRename && (
+        <RenameDialog
+          currentTitle={pendingRename.title}
+          onRename={(title) => void rename(pendingRename, title)}
+          onCancel={() => setPendingRename(null)}
+        />
       )}
 
       <ConfirmDialog

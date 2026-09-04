@@ -27,7 +27,9 @@ These are the product, not implementation details. Do not break them:
    including on a hand-typed URL, and `ModeEleve` gives it a plain back arrow instead of the
    `ExitLock`: with no text behind the screen there is nothing to lock. Copies saved before the
    field existed have `origin` undefined and read as `created` — use `isReceived()`, never a raw
-   comparison. `src/pages/__tests__/DicteeDetail.test.tsx` guards the routing.
+   comparison. `src/pages/__tests__/DicteeDetail.test.tsx` guards the routing. Anything a pupil
+   must be able to do therefore belongs on `Accueil`, the one screen both modes reach: renaming
+   lives there (`RenameDialog`), not only on the teacher screen.
 
 ## Stack
 

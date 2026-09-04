@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Eye, EyeOff, Play, QrCode, Save } from 'lucide-react';
+import { Eye, EyeOff, Pencil, Play, QrCode, Save } from 'lucide-react';
 import PageShell from '@/components/PageShell';
 import QrShare from '@/components/QrShare';
+import RenameDialog from '@/components/RenameDialog';
 import SegmentEditor from '@/components/SegmentEditor';
 import SpeechSettingsFields from '@/components/SpeechSettingsFields';
 import { getDictation, saveDictation } from '@/lib/db';
@@ -28,6 +29,7 @@ export default function DicteeDetail() {
   const [showQr, setShowQr] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [renaming, setRenaming] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -83,7 +85,33 @@ export default function DicteeDetail() {
   }
 
   return (
-    <PageShell title={dictation.title} backTo="/" backLabel="Mes dictées">
+    <PageShell
+      title={dictation.title}
+      backTo="/"
+      backLabel="Mes dictées"
+      headerRight={
+        <button
+          type="button"
+          onClick={() => setRenaming(true)}
+          aria-label="Renommer la dictée"
+          className="p-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-slate-400 transition-colors"
+        >
+          <Pencil className="w-5 h-5" />
+        </button>
+      }
+    >
+      {renaming && (
+        <RenameDialog
+          currentTitle={dictation.title}
+          onRename={(title) => {
+            // Like every other field here, the new name joins the save bar.
+            patch({ title });
+            setRenaming(false);
+          }}
+          onCancel={() => setRenaming(false)}
+        />
+      )}
+
       <div className="flex flex-col sm:flex-row gap-3 mb-8">
         <button
           type="button"
