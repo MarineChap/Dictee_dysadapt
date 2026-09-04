@@ -30,6 +30,7 @@ These are the product, not implementation details. Do not break them:
 - **Offline**: `vite-plugin-pwa` (`generateSW`)
 - **OCR**: `tesseract.js` 6, French `best_int` model
 - **Android**: Capacitor 7 (`android/` is committed; its generated files are gitignored)
+- **Self-hosting**: `Dockerfile` (Vite build → nginx) + `docker/default.conf.template`
 
 ## Directory structure
 
@@ -64,6 +65,20 @@ The WCAG override at the bottom of the file (`bg-primary` → `#7e22ce` in dark 
 `segmentText()` is pure and has no dependencies: break on punctuation (the mark stays glued to the
 part before it), cut anything over `maxWords` without stranding a linking word, merge anything
 under `minWords`. Change it only with a test that pins the new behaviour.
+
+### Served under a sub-path
+DysAdapt publishes this app at `dysadapt.com/dictee/`, so the `dictee` service in its
+`docker-compose.yml` builds this repo with `--build-arg VITE_BASE=/dictee/` and the proxy strips
+the prefix before nginx sees it. `VITE_BASE` is a **build** arg, not a runtime one: Vite inlines it
+into the asset URLs, the manifest's `scope`/`start_url` and the service worker's registration scope
+and navigate fallback. Two consequences worth remembering — the offline guarantee depends on both:
+
+- the base must match the path the proxy serves, or the worker's scope won't cover the page;
+- links in must carry the **trailing slash** (`/dictee/`, not `/dictee`), or the app loads outside
+  its own scope, never registers, and silently stops working offline.
+
+`DICTEE_PORT` (default `8081`) is the one genuine runtime knob — the nginx entrypoint renders it
+into the config with envsubst.
 
 ### Offline assets
 `public/tesseract/` and `public/fonts/` are vendored binaries, not npm dependencies at runtime.

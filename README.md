@@ -65,6 +65,25 @@ L'application est **statique et entièrement cliente** : `dist/` se dépose tel 
 quel hébergeur. `VITE_BASE` permet de servir depuis un sous-chemin (le workflow GitHub Pages
 l'utilise).
 
+### Avec Docker
+
+Le `Dockerfile` construit le bundle et le sert avec nginx — c'est ainsi que la pile DysAdapt
+publie Dictadapt sur `dysadapt.com/dictee/` :
+
+```bash
+docker build --build-arg VITE_BASE=/dictee/ -t dictadapt .
+docker run --rm -p 8081:8081 dictadapt   # http://localhost:8081
+```
+
+`VITE_BASE` est un argument de **construction** : Vite l'inscrit dans le bundle (URLs des
+ressources, `scope` du service worker, `start_url` du manifeste). Il doit correspondre au chemin
+servi par le proxy, sinon l'application se charge hors de la portée de son service worker et ne
+fonctionne plus hors ligne. `DICTEE_PORT` (défaut `8081`) est lui un argument d'exécution.
+
+En pratique on ne lance pas cette image seule : le service `dictee` de
+[`docker-compose.yml`](https://github.com/MarineChap/dysadapt) de DysAdapt la construit depuis un
+clone voisin de ce dépôt.
+
 ### Android
 
 ```bash
