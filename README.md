@@ -13,6 +13,10 @@ manquée et ne rattrape plus jamais le train. Dictadapt lui rend le rythme.
    autant de fois qu'il veut**. Le bouton **change de couleur** une fois écouté, pour qu'il sache
    toujours où il en est.
 
+La ponctuation est **dictée à voix haute** — « virgule », « point » — après un **temps de
+respiration**, comme le ferait l'enseignant : l'élève finit d'écrire son mot avant d'entendre la
+marque. La pause s'allonge quand la lecture est ralentie.
+
 Le texte n'est **jamais affiché** à l'élève : c'est une dictée, il écoute et il écrit.
 
 ## Ce qui est garanti

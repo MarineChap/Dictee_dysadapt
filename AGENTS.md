@@ -49,7 +49,7 @@ src/
 │   ├── segment.ts    French splitting — the heart of the tool
 │   ├── ocr.ts        Tesseract worker + French text cleanup
 │   ├── image.ts      Canvas preprocessing (grey, Otsu, rotation)
-│   ├── speech.ts     TTS adapter: Web Speech API / Capacitor native
+│   ├── speech.ts     TTS adapter: Web Speech API / Capacitor native, paced reading
 │   ├── share.ts      QR payload: deflate + base64url + multi-code splitting
 │   ├── db.ts         IndexedDB (dictations, blobs, progress)
 │   ├── storage.ts    localStorage settings
@@ -69,6 +69,14 @@ The WCAG override at the bottom of the file (`bg-primary` → `#7e22ce` in dark 
 — removing it makes every dark-mode button fail AA. Buttons carry
 `transition-all active:scale-95`; cards are `rounded-3xl`; eyebrow labels are
 `text-[10px] font-black uppercase tracking-widest`.
+
+### Reading aloud
+`speak()` is a chain, not one utterance: `speechChunks()` cuts the segment just before each spoken
+mark and `speak` leaves `BREATH_PAUSE_MS / rate` of silence there, so the pupil finishes writing
+the word before hearing "virgule". `onEnd` fires after the last piece, and a module-level
+generation counter — bumped by `cancelSpeech()` and by the next `speak()` — makes every callback
+still in flight (an `onend`, a pending pause, a native promise) return instead of speaking the
+rest. Any new exit path from a reading must bump it too, or a stale chain will talk over the next.
 
 ### Segmentation
 `segmentText()` is pure and has no dependencies: break on punctuation (the mark stays glued to the
