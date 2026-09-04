@@ -16,7 +16,14 @@ COPY . .
 # Vite bakes the base path into the bundle — asset URLs, the PWA manifest's
 # start_url/scope and the service worker's navigate fallback all inline it — so
 # it must be a build arg. Setting it on the running container is too late.
-# `/` suits the standalone and Capacitor bundles; DysAdapt passes `/dictee/`.
+#
+# It must equal the path the browser requests, *after* any prefix the proxy in
+# front strips. `/` is right whenever this container is reached at the root of
+# its port — standalone, Capacitor, and DysAdapt's local docker-compose; only
+# DysAdapt's prod/staging stacks pass `/dictee/`, because Caddy strips that
+# prefix again on the way in. A mismatch is silent: nginx's try_files fallback
+# answers the bundle's own <script> with index.html, 200 and all, and the
+# browser will not run HTML as a module — so the page just stays blank.
 ARG VITE_BASE=/
 ENV VITE_BASE=$VITE_BASE
 RUN npm run build

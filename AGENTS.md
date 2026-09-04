@@ -67,13 +67,20 @@ part before it), cut anything over `maxWords` without stranding a linking word, 
 under `minWords`. Change it only with a test that pins the new behaviour.
 
 ### Served under a sub-path
-DysAdapt publishes this app at `dysadapt.com/dictee/`, so the `dictee` service in its
-`docker-compose.yml` builds this repo with `--build-arg VITE_BASE=/dictee/` and the proxy strips
-the prefix before nginx sees it. `VITE_BASE` is a **build** arg, not a runtime one: Vite inlines it
-into the asset URLs, the manifest's `scope`/`start_url` and the service worker's registration scope
-and navigate fallback. Two consequences worth remembering — the offline guarantee depends on both:
+DysAdapt publishes this app at `dysadapt.com/dictee/`, so its `docker-compose.prod.yml` builds this
+repo with `--build-arg VITE_BASE=/dictee/` and Caddy strips the prefix before nginx sees it. Its
+local `docker-compose.yml` has no proxy and serves the container at the root of port 8081, so there
+it builds `/` — the default.
 
-- the base must match the path the proxy serves, or the worker's scope won't cover the page;
+`VITE_BASE` is a **build** arg, not a runtime one: Vite inlines it into the asset URLs, the
+manifest's `scope`/`start_url` and the service worker's registration scope and navigate fallback.
+Three consequences worth remembering — the offline guarantee depends on the last two:
+
+- the base must equal the path the browser requests, *after* whatever prefix the proxy strips.
+  Otherwise the `try_files` fallback answers the bundle's own `<script>` with `index.html` — 200,
+  `text/html` — the browser won't run HTML as a module, and the page renders blank with no error
+  anywhere in the stack. This is what a sub-path build served at a root port looks like;
+- for the same reason the base must cover the page, or the worker's scope won't;
 - links in must carry the **trailing slash** (`/dictee/`, not `/dictee`), or the app loads outside
   its own scope, never registers, and silently stops working offline.
 

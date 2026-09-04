@@ -71,14 +71,25 @@ Le `Dockerfile` construit le bundle et le sert avec nginx — c'est ainsi que la
 publie Dictadapt sur `dysadapt.com/dictee/` :
 
 ```bash
-docker build --build-arg VITE_BASE=/dictee/ -t dictadapt .
+docker build -t dictadapt .
 docker run --rm -p 8081:8081 dictadapt   # http://localhost:8081
 ```
 
 `VITE_BASE` est un argument de **construction** : Vite l'inscrit dans le bundle (URLs des
-ressources, `scope` du service worker, `start_url` du manifeste). Il doit correspondre au chemin
-servi par le proxy, sinon l'application se charge hors de la portée de son service worker et ne
-fonctionne plus hors ligne. `DICTEE_PORT` (défaut `8081`) est lui un argument d'exécution.
+ressources, `scope` du service worker, `start_url` du manifeste). Il doit valoir le chemin auquel
+le navigateur demande l'application, *après* le préfixe que le proxy retire — d'où le `/` par
+défaut ci-dessus, l'image étant servie à la racine de son port. DysAdapt construit `/dictee/`
+parce que Caddy retire ce même préfixe avant nginx :
+
+```bash
+docker build --build-arg VITE_BASE=/dictee/ -t dictadapt .
+```
+
+Un `VITE_BASE` qui ne correspond pas au chemin servi échoue en silence : le `try_files` de nginx
+répond au `<script>` du bundle par `index.html`, en 200, le navigateur refuse d'exécuter du HTML
+comme module, et la page reste blanche. Et même chargée, une application hors de la portée de son
+service worker ne s'installe pas et ne fonctionne plus hors ligne. `DICTEE_PORT` (défaut `8081`)
+est lui un argument d'exécution.
 
 En pratique on ne lance pas cette image seule : le service `dictee` de
 [`docker-compose.yml`](https://github.com/MarineChap/dysadapt) de DysAdapt la construit depuis un

@@ -10,9 +10,14 @@ server {
     root  /usr/share/nginx/html;
     index index.html;
 
-    # The reverse proxy in front (Caddy `handle_path /dictee/*`, or the port
-    # directly in local dev) strips the sub-path, so paths arrive at the root
-    # even though the bundle was built with VITE_BASE=/dictee/.
+    # Everything is served from the root of this port. A sub-path deployment
+    # works because the proxy strips its prefix first (Caddy `handle_path
+    # /dictee/*`), so the request nginx sees is rooted either way — but only if
+    # the bundle's VITE_BASE matches the prefix. Reached on this port with no
+    # proxy, a bundle built for /dictee/ asks for /dictee/assets/… — which the
+    # `try_files` fallback below answers with index.html at 200, so the browser
+    # gets HTML where it expected a module and renders nothing at all. Build
+    # with `/` for that case; see the Dockerfile.
 
     # Vite hashes every asset filename, so those can be cached forever. The
     # entry point and the service worker must not be, or a redeploy would never
