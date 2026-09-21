@@ -1,12 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Check, RotateCcw, Volume2 } from 'lucide-react';
+import { ArrowLeft, Check, RotateCcw, Volume2 } from 'lucide-react';
 import DictadaptLogo from '@/components/DictadaptLogo';
-import ExitLock from '@/components/ExitLock';
 import { clearProgress, getDictation, getProgress, saveProgress } from '@/lib/db';
 import { cancelSpeech, speak } from '@/lib/speech';
 import { countWords } from '@/lib/segment';
-import { readSettings } from '@/lib/storage';
 import type { Dictation } from '@/lib/types';
 
 /**
@@ -25,8 +23,6 @@ export default function ModeEleve() {
   const [notFound, setNotFound] = useState(false);
   const [listened, setListened] = useState<Set<string>>(new Set());
   const [speakingId, setSpeakingId] = useState<string | null>(null);
-  // Read once at mount: changing the code mid-dictation would be surprising.
-  const [exitCode] = useState(() => readSettings().exitCode);
   const repeatTimer = useRef<number | null>(null);
 
   useEffect(() => {
@@ -148,7 +144,14 @@ export default function ModeEleve() {
           <p className="flex-1 min-w-0 text-center font-black text-slate-900 dark:text-white tracking-tight truncate">
             {dictation.title}
           </p>
-          <ExitLock code={exitCode} onExit={() => navigate(`/dictee/${dictation.id}`)} />
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            aria-label="Quitter la dictée"
+            className="p-2 rounded-xl text-slate-400 dark:text-slate-500 hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
         </div>
       </header>
 

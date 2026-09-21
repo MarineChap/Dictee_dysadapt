@@ -53,6 +53,20 @@ describe('encode/decode round trip', () => {
     expect(roundTrip(makeDictation(segments)).imported.segments).toEqual(segments);
   });
 
+  it('carries the speak-punctuation flag, and keeps it unset when it was', () => {
+    const base = makeDictation(['Le chat dort.']);
+    expect(
+      roundTrip({ ...base, speech: { ...base.speech, speakPunctuation: true } }).imported.speech
+        .speakPunctuation
+    ).toBe(true);
+    expect(
+      roundTrip({ ...base, speech: { ...base.speech, speakPunctuation: false } }).imported.speech
+        .speakPunctuation
+    ).toBe(false);
+    // A dictation saved before the option existed reads as enabled: keep it undefined.
+    expect(roundTrip(base).imported.speech.speakPunctuation).toBeUndefined();
+  });
+
   it('fits a normal dictation in a single QR code', () => {
     const dictation = makeDictation(
       'Le petit chat noir dormait paisiblement sur le vieux fauteuil du salon pendant que la pluie tombait sans relâche sur les toits du village endormi'

@@ -41,6 +41,13 @@ export interface Dictation {
   allowReveal: boolean;
   /** Key into the `blobs` store holding the source photo. Teacher side only. */
   imageId?: string;
+  /**
+   * Received on this device from a QR code or a .json file, rather than created
+   * here. It carries no source text and must never open in teacher mode
+   * (DicteeDetail) — there is nothing to edit and nothing to read: this device
+   * only plays it to the pupil. Absent on dictations authored on this device.
+   */
+  imported?: boolean;
 }
 
 /** Which parts the pupil has already listened to. Survives closing the app. */
@@ -61,12 +68,9 @@ export interface Settings {
   theme: 'light' | 'dark' | 'system';
   /** Default reading settings applied to newly created dictations. */
   speech: SpeechSettings;
-  /** 4 digits. When set, leaving pupil mode asks for it. Empty = long-press only. */
-  exitCode: string;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
   speech: DEFAULT_SPEECH,
-  exitCode: '',
 };

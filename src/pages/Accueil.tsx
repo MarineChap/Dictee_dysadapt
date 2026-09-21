@@ -1,11 +1,27 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { BookOpenCheck, Camera, Copy, Play, Plus, QrCode, Settings, Trash2 } from 'lucide-react';
+import {
+  BookOpenCheck,
+  Camera,
+  Check,
+  Copy,
+  FileUp,
+  Import,
+  Pencil,
+  Play,
+  Plus,
+  QrCode,
+  Settings,
+  SquarePen,
+  Trash2,
+  X,
+} from 'lucide-react';
 import { nanoid } from 'nanoid';
 import PageShell from '@/components/PageShell';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { useDictations } from '@/hooks/useDictations';
 import { deleteDictation, saveDictation } from '@/lib/db';
+import { decodeDictationFile } from '@/lib/file';
 import type { Dictation } from '@/lib/types';
 
 function formatDate(timestamp: number): string {
@@ -19,7 +35,78 @@ function formatDate(timestamp: number): string {
 export default function Accueil() {
   const { dictations, loading, error, refresh } = useDictations();
   const [pendingDelete, setPendingDelete] = useState<Dictation | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+  // Inline rename on a card: the id being edited and its working title. An
+  // imported dictation has no teacher page, so the card is the only place to
+  // rename it — and the same affordance renames the ones authored here.
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+
+  function startRename(dictation: Dictation) {
+    setRenamingId(dictation.id);
+    setRenameValue(dictation.title);
+  }
+
+  function cancelRename() {
+    setRenamingId(null);
+    setRenameValue('');
+  }
+
+  function commitRename(dictation: Dictation) {
+    const title = renameValue.trim();
+    setRenamingId(null);
+    setRenameValue('');
+    if (!title || title === dictation.title) return;
+    // Date.now()/saveDictation live in a promise callback, never in the render
+    // path — the same pattern importFile uses to satisfy react-hooks/purity.
+    void Promise.resolve()
+      .then(() => saveDictation({ ...dictation, title, updatedAt: Date.now() }))
+      .then(refresh);
+  }
+
+  /**
+   * Imports a dictation from a .json file (see src/lib/file.ts) — the way to
+   * bring one over from another computer when a QR code is impractical.
+   */
+  function importFile(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = ''; // let the same file be picked again after an error
+    if (!file) return;
+    setImportError(null);
+
+    file
+      .text()
+      .then((content) => {
+        const imported = decodeDictationFile(content);
+        const id = nanoid(10);
+        const now = Date.now();
+        return saveDictation({
+          id,
+          title: imported.title,
+          createdAt: now,
+          updatedAt: now,
+          // Received on a fresh machine: the pupil's parts, never the photo.
+          sourceText: '',
+          segments: imported.segments.map((text) => ({ id: nanoid(8), text })),
+          speech: imported.speech,
+          showWordCount: imported.showWordCount,
+          allowReveal: imported.allowReveal,
+          imported: true,
+        }).then(() => id);
+      })
+      // Straight to the pupil screen, exactly like a scanned QR code: a file
+      // received on this device is there to be played, never to be read. The
+      // teacher who made it keeps the original — this copy carries no text to
+      // reveal (sourceText is empty) and no way in to see one.
+      .then((id) => navigate(`/eleve/${id}`))
+      .catch((err: unknown) => {
+        setImportError(
+          err instanceof Error ? err.message : "Ce fichier n'a pas pu être importé."
+        );
+      });
+  }
 
   async function duplicate(dictation: Dictation) {
     const now = Date.now();
@@ -69,7 +156,28 @@ export default function Accueil() {
           <QrCode className="w-5 h-5" />
           Recevoir un QR code
         </Link>
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="flex items-center justify-center gap-2 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-primary hover:text-primary transition-all active:scale-95"
+        >
+          <FileUp className="w-5 h-5" />
+          Importer un fichier
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="application/json,.json"
+          onChange={importFile}
+          className="hidden"
+        />
       </div>
+
+      {importError && (
+        <div className="mb-8 flex items-start gap-3 rounded-2xl border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/30 p-4">
+          <p className="text-sm text-amber-800 dark:text-amber-200">{importError}</p>
+        </div>
+      )}
 
       <div className="flex items-center gap-2 mb-5">
         <BookOpenCheck className="w-5 h-5 text-primary flex-shrink-0" />
@@ -129,14 +237,82 @@ export default function Accueil() {
               key={dictation.id}
               className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 hover:shadow-lg hover:border-primary-hover transition-all group flex flex-col"
             >
-              <Link to={`/dictee/${dictation.id}`} className="flex-1 min-w-0">
-                <h3 className="font-black text-slate-900 dark:text-white tracking-tight truncate">
-                  {dictation.title}
-                </h3>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mt-1">
-                  {dictation.segments.length} parties · {formatDate(dictation.createdAt)}
-                </p>
-              </Link>
+              <div className="flex items-start gap-2">
+                {renamingId === dictation.id ? (
+                  <>
+                    <div className="flex-1 min-w-0">
+                      <input
+                        type="text"
+                        value={renameValue}
+                        autoFocus
+                        onChange={(event) => setRenameValue(event.target.value)}
+                        onBlur={() => void commitRename(dictation)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter') {
+                            event.preventDefault();
+                            void commitRename(dictation);
+                          } else if (event.key === 'Escape') {
+                            cancelRename();
+                          }
+                        }}
+                        aria-label={`Renommer ${dictation.title}`}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 focus:border-primary bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-black tracking-tight transition-all outline-none"
+                      />
+                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mt-1">
+                        {dictation.segments.length} parties · {formatDate(dictation.createdAt)}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => void commitRename(dictation)}
+                      aria-label="Valider le titre"
+                      className="p-2.5 rounded-xl text-primary hover:bg-primary-muted transition-colors flex-shrink-0"
+                    >
+                      <Check className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={cancelRename}
+                      aria-label="Annuler le renommage"
+                      className="p-2.5 -mr-1 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200 transition-colors flex-shrink-0"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {/* The card body opens teacher mode when there is one; an
+                        imported dictation has none, so it only plays for the pupil. */}
+                    <Link
+                      to={dictation.imported ? `/eleve/${dictation.id}` : `/dictee/${dictation.id}`}
+                      className="flex-1 min-w-0"
+                    >
+                      <h3 className="flex items-center gap-1.5 font-black text-slate-900 dark:text-white tracking-tight">
+                        {dictation.imported && (
+                          <Import
+                            className="w-4 h-4 flex-shrink-0 text-primary"
+                            aria-label="Dictée importée"
+                          />
+                        )}
+                        <span className="truncate">{dictation.title}</span>
+                      </h3>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mt-1">
+                        {dictation.segments.length} parties · {formatDate(dictation.createdAt)}
+                      </p>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => startRename(dictation)}
+                      aria-label={`Renommer ${dictation.title}`}
+                      className="p-2.5 -mr-1 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200 transition-colors flex-shrink-0"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                  </>
+                )}
+              </div>
 
               <div className="flex items-center gap-2 mt-5">
                 <button
@@ -145,8 +321,19 @@ export default function Accueil() {
                   className="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-primary-muted"
                 >
                   <Play className="w-4 h-4" />
-                  Donner à l&apos;élève
+                  Faire la dictée
                 </button>
+                {!dictation.imported && (
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/dictee/${dictation.id}`)}
+                    aria-label={`Modifier la dictée ${dictation.title}`}
+                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-primary hover:text-primary transition-all active:scale-95"
+                  >
+                    <SquarePen className="w-4 h-4" />
+                    Modifier
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => void duplicate(dictation)}

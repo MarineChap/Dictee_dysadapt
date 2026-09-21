@@ -131,6 +131,7 @@ export default function Scanner() {
       speech: imported.speech,
       showWordCount: imported.showWordCount,
       allowReveal: imported.allowReveal,
+      imported: true,
     });
     navigate(`/eleve/${id}`, { replace: true });
   }

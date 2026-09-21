@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Eye, EyeOff, Play, QrCode, Save } from 'lucide-react';
+import { FileDown, Play, QrCode, Save } from 'lucide-react';
 import PageShell from '@/components/PageShell';
 import QrShare from '@/components/QrShare';
 import SegmentEditor from '@/components/SegmentEditor';
 import SpeechSettingsFields from '@/components/SpeechSettingsFields';
 import { getDictation, saveDictation } from '@/lib/db';
+import { FILE_MIME, dictationFileName, encodeDictationFile } from '@/lib/file';
 import { cancelSpeech, speak } from '@/lib/speech';
 import type { Dictation } from '@/lib/types';
 
@@ -15,7 +16,6 @@ export default function DicteeDetail() {
 
   const [dictation, setDictation] = useState<Dictation | null>(null);
   const [notFound, setNotFound] = useState(false);
-  const [showText, setShowText] = useState(false);
   const [showQr, setShowQr] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -25,13 +25,23 @@ export default function DicteeDetail() {
     let cancelled = false;
     void getDictation(id).then((found) => {
       if (cancelled) return;
-      if (found) setDictation(found);
-      else setNotFound(true);
+      if (!found) {
+        setNotFound(true);
+        return;
+      }
+      // A dictation received here (QR or file) has no teacher mode: no source
+      // text to read, nothing to edit. Bounce it straight to the pupil screen
+      // so this page can never expose it.
+      if (found.imported) {
+        navigate(`/eleve/${found.id}`, { replace: true });
+        return;
+      }
+      setDictation(found);
     });
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, navigate]);
 
   useEffect(() => () => cancelSpeech(), []);
 
@@ -46,6 +56,24 @@ export default function DicteeDetail() {
     await saveDictation(dictation);
     setDirty(false);
     setSaved(true);
+  }
+
+  /**
+   * Downloads the dictation as a .json file, for moving it to another computer
+   * on a USB key when there is no camera to scan a QR code. The text is not in
+   * clear inside the file — see src/lib/file.ts.
+   */
+  function exportFile() {
+    if (!dictation) return;
+    const blob = new Blob([encodeDictationFile(dictation)], { type: FILE_MIME });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = dictationFileName(dictation);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
   }
 
   if (notFound) {
@@ -86,6 +114,14 @@ export default function DicteeDetail() {
           <QrCode className="w-5 h-5" />
           {showQr ? 'Masquer le QR' : 'Partager par QR'}
         </button>
+        <button
+          type="button"
+          onClick={exportFile}
+          className="flex items-center justify-center gap-2 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-primary hover:text-primary transition-all active:scale-95"
+        >
+          <FileDown className="w-5 h-5" />
+          Exporter (fichier)
+        </button>
       </div>
 
       {showQr && (
@@ -95,28 +131,20 @@ export default function DicteeDetail() {
       )}
 
       <section className="mb-8">
-        <div className="flex items-center justify-between gap-3 mb-3">
-          <h2 className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
-            Texte de la dictée
-          </h2>
-          <button
-            type="button"
-            onClick={() => setShowText((current) => !current)}
-            className="flex items-center gap-2 px-3 py-1.5 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-bold transition-colors"
-          >
-            {showText ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            {showText ? 'Masquer' : 'Afficher'}
-          </button>
-        </div>
-        {showText ? (
-          <p className="reading-text rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 text-slate-900 dark:text-slate-100 whitespace-pre-wrap">
-            {dictation.sourceText || dictation.segments.map((s) => s.text).join(' ')}
-          </p>
-        ) : (
-          <p className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 p-4 text-xs text-slate-400 dark:text-slate-500">
-            Masqué pour éviter que l&apos;élève ne le lise par-dessus votre épaule.
-          </p>
-        )}
+        <label
+          htmlFor="title"
+          className="block text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3"
+        >
+          Titre
+        </label>
+        <input
+          id="title"
+          type="text"
+          value={dictation.title}
+          onChange={(event) => patch({ title: event.target.value })}
+          placeholder="Dictée du lundi"
+          className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 focus:border-primary bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 transition-all outline-none"
+        />
       </section>
 
       <section className="mb-8">

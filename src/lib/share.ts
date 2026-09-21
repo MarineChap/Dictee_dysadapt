@@ -19,7 +19,7 @@ const MAX_CHUNK_CHARS = 2600;
 
 /** Short keys: every byte saved is a byte that need not fit in the QR code. */
 interface WirePayload {
-  /** transfer id — ties the chunks of one dictation together */
+  /** a random id, so two exports of the same dictation differ byte-for-byte */
   i: string;
   /** title */
   t: string;
@@ -33,6 +33,26 @@ interface WirePayload {
   w: 0 | 1;
   /** allow reveal */
   v: 0 | 1;
+  /** speak punctuation; absent on codes made before the option, which read as on */
+  k?: 0 | 1;
+}
+
+function buildWirePayload(dictation: Dictation): WirePayload {
+  const payload: WirePayload = {
+    i: nanoid(6),
+    t: dictation.title,
+    s: dictation.segments.map((segment) => segment.text),
+    r: dictation.speech.rate,
+    p: dictation.speech.repeatAfterMs,
+    w: dictation.showWordCount ? 1 : 0,
+    v: dictation.allowReveal ? 1 : 0,
+  };
+  // Only carry the flag when it was set, so `undefined` (pre-option dictations,
+  // which read as on) survives the round trip instead of hardening into `true`.
+  if (dictation.speech.speakPunctuation !== undefined) {
+    payload.k = dictation.speech.speakPunctuation ? 1 : 0;
+  }
+  return payload;
 }
 
 function toBase64Url(bytes: Uint8Array): string {
@@ -50,22 +70,22 @@ function fromBase64Url(value: string): Uint8Array {
 }
 
 /**
+ * The dictation deflated to a single base64url string — the compact, non-human-
+ * readable payload the QR chunks and the file export (file.ts) both build on.
+ * base64url can never contain a colon, so the QR chunk header below can safely
+ * use `:` as a separator.
+ */
+export function encodePayload(dictation: Dictation): string {
+  return toBase64Url(deflateSync(strToU8(JSON.stringify(buildWirePayload(dictation))), { level: 9 }));
+}
+
+/**
  * Encodes a dictation into the chunks to display, in order.
  * Each chunk is `DICTADAPT1:<transferId>:<n>:<total>:<data>`.
  */
 export function encodeDictation(dictation: Dictation): string[] {
   const transferId = nanoid(6);
-  const payload: WirePayload = {
-    i: transferId,
-    t: dictation.title,
-    s: dictation.segments.map((segment) => segment.text),
-    r: dictation.speech.rate,
-    p: dictation.speech.repeatAfterMs,
-    w: dictation.showWordCount ? 1 : 0,
-    v: dictation.allowReveal ? 1 : 0,
-  };
-
-  const encoded = toBase64Url(deflateSync(strToU8(JSON.stringify(payload)), { level: 9 }));
+  const encoded = encodePayload(dictation);
   const total = Math.max(1, Math.ceil(encoded.length / MAX_CHUNK_CHARS));
 
   return Array.from({ length: total }, (_, index) => {
@@ -107,7 +127,12 @@ export interface ImportedDictation {
 
 /** Rebuilds a dictation from a complete, ordered set of chunk payloads. */
 export function decodeChunks(chunks: string[]): ImportedDictation {
-  const raw = strFromU8(inflateSync(fromBase64Url(chunks.join(''))));
+  return decodePayload(chunks.join(''));
+}
+
+/** Rebuilds a dictation from a single base64url payload (a joined QR set, or a file). */
+export function decodePayload(encoded: string): ImportedDictation {
+  const raw = strFromU8(inflateSync(fromBase64Url(encoded)));
   const payload = JSON.parse(raw) as Partial<WirePayload>;
 
   if (!Array.isArray(payload.s) || payload.s.some((entry) => typeof entry !== 'string')) {
@@ -120,6 +145,7 @@ export function decodeChunks(chunks: string[]): ImportedDictation {
     speech: {
       rate: typeof payload.r === 'number' ? payload.r : DEFAULT_SPEECH.rate,
       repeatAfterMs: typeof payload.p === 'number' ? payload.p : DEFAULT_SPEECH.repeatAfterMs,
+      speakPunctuation: payload.k === undefined ? undefined : payload.k === 1,
     },
     showWordCount: payload.w !== 0,
     allowReveal: payload.v === 1,

@@ -27,7 +27,7 @@ function renderPupilScreen() {
     <MemoryRouter initialEntries={[`/eleve/${dictation.id}`]}>
       <Routes>
         <Route path="/eleve/:id" element={<ModeEleve />} />
-        <Route path="/dictee/:id" element={<p>écran enseignant</p>} />
+        <Route path="/" element={<p>bibliothèque</p>} />
       </Routes>
     </MemoryRouter>
   );
@@ -145,14 +145,14 @@ describe('Mode élève', () => {
     expect(await screen.findByText(/Bravo/)).toBeInTheDocument();
   });
 
-  it('offers no plain way back to the teacher screen', async () => {
+  it('lets the pupil leave to the library and back with a single tap', async () => {
+    const user = userEvent.setup();
     renderPupilScreen();
     await screen.findByText('Partie 1');
 
-    // The only exit is the lock, which needs a two-second press.
-    expect(screen.queryByRole('link')).not.toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /Quitter le mode élève \(appui long/ })
-    ).toBeInTheDocument();
+    // No lock any more: one tap returns to the library, so the pupil can come
+    // and go from the dictation freely.
+    await user.click(screen.getByRole('button', { name: /Quitter la dictée/ }));
+    expect(await screen.findByText('bibliothèque')).toBeInTheDocument();
   });
 });

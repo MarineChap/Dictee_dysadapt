@@ -259,6 +259,23 @@ export default function NouvelleDictee() {
 
           <div>
             <label
+              htmlFor="title"
+              className="block text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2"
+            >
+              Titre
+            </label>
+            <input
+              id="title"
+              type="text"
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder="Dictée du lundi"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 focus:border-primary bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 transition-all outline-none"
+            />
+          </div>
+
+          <div>
+            <label
               htmlFor="ocr-text"
               className="block text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2"
             >
@@ -365,23 +382,6 @@ export default function NouvelleDictee() {
 
       {stage === 'reglages' && (
         <div className="space-y-5">
-          <div>
-            <label
-              htmlFor="title"
-              className="block text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2"
-            >
-              Titre
-            </label>
-            <input
-              id="title"
-              type="text"
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              placeholder="Dictée du lundi"
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 focus:border-primary bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 transition-all outline-none"
-            />
-          </div>
-
           <SpeechSettingsFields
             value={speech}
             onChange={setSpeech}
