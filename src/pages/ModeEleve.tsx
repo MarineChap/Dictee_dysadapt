@@ -160,6 +160,8 @@ export default function ModeEleve() {
 
   function leave() {
     if (lockerOf) window.location.assign(lockerUrl(lockerOf));
+    // Back where the teacher gave it from (the dictation, or the library).
+    else if ((window.history.state?.idx ?? 0) > 0) navigate(-1);
     else navigate('/');
   }
 

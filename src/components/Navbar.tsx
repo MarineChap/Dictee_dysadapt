@@ -4,11 +4,17 @@ import { ArrowLeft } from 'lucide-react';
 import DictadaptLogo from './DictadaptLogo';
 import ThemeToggle from './ThemeToggle';
 import AccountButton from './AccountButton';
+import { useAccount } from '@/hooks/useAccount';
+import { dashboardUrl } from '@/lib/account';
 
 interface NavbarProps {
   /** Title shown centred on desktop. */
   centerContent?: ReactNode;
-  /** Route to go back to. When set, the logo is replaced by a back arrow. */
+  /**
+   * Route to go back to. When set, the logo is replaced by a back arrow.
+   * Signed in, the teacher's home is their DysAdapt space, not this library:
+   * a back to "/" then leads there.
+   */
   backTo?: string;
   backLabel?: string;
   right?: ReactNode;
@@ -19,16 +25,23 @@ interface NavbarProps {
  * three zones with the middle one absolutely centred).
  */
 export default function Navbar({ centerContent, backTo, backLabel, right }: NavbarProps) {
+  const { account } = useAccount();
+  const toSpace = !!account && backTo === '/';
+  const backClass =
+    'flex items-center gap-2 px-3 py-2 -ml-3 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors';
+
   return (
     <nav className="fixed top-0 w-full z-40 bg-background/70 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 safe-top">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
         <div className="flex items-center min-w-0">
-          {backTo ? (
-            <Link
-              to={backTo}
-              aria-label={backLabel ?? 'Retour'}
-              className="flex items-center gap-2 px-3 py-2 -ml-3 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            >
+          {toSpace ? (
+            <a href={dashboardUrl()} data-testid="back-to-space" className={backClass}>
+              <ArrowLeft className="w-5 h-5 flex-shrink-0" />
+              <span className="hidden sm:inline">Mon espace</span>
+              <span className="sr-only sm:hidden">Mon espace</span>
+            </a>
+          ) : backTo ? (
+            <Link to={backTo} aria-label={backLabel ?? 'Retour'} className={backClass}>
               <ArrowLeft className="w-5 h-5 flex-shrink-0" />
               <span className="hidden sm:inline">{backLabel ?? 'Retour'}</span>
             </Link>
@@ -47,7 +60,8 @@ export default function Navbar({ centerContent, backTo, backLabel, right }: Navb
 
         <div className="flex items-center gap-1">
           {right}
-          <AccountButton />
+          {/* The back arrow already leads to the space: no second way there. */}
+          {!toSpace && <AccountButton />}
           <ThemeToggle />
         </div>
       </div>

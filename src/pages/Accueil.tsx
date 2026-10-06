@@ -394,14 +394,17 @@ export default function Accueil() {
               </div>
 
               <div className="flex items-center gap-2 mt-5">
-                <button
-                  type="button"
-                  onClick={() => navigate(`/eleve/${dictation.id}`)}
-                  className="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-primary-muted"
-                >
-                  <Play className="w-4 h-4" />
-                  Faire la dictée
-                </button>
+                {/* Signed in, the pupil gets it from their locker; a received copy has only this. */}
+                {(!account || dictation.imported) && (
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/eleve/${dictation.id}`)}
+                    className="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-primary-muted"
+                  >
+                    <Play className="w-4 h-4" />
+                    Faire la dictée
+                  </button>
+                )}
                 {!dictation.imported && (
                   <button
                     type="button"
