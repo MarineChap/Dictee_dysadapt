@@ -16,7 +16,7 @@ COPY . .
 # Vite bakes the base path into the bundle — asset URLs, the PWA manifest's
 # start_url/scope and the service worker's navigate fallback all inline it — so
 # it must be a build arg. Setting it on the running container is too late.
-# `/` suits the standalone and Capacitor bundles; DysAdapt passes `/dictee/`.
+# `/` suits the standalone bundle; DysAdapt passes `/dictee/`.
 ARG VITE_BASE=/
 ENV VITE_BASE=$VITE_BASE
 RUN npm run build

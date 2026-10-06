@@ -31,13 +31,8 @@ Le texte n'est **jamais affiché** à l'élève : c'est une dictée, il écoute 
 Ouvrez l'application dans le navigateur, puis « Ajouter à l'écran d'accueil » (Android) ou
 « Sur l'écran d'accueil » (iOS). Elle s'installe comme une application et fonctionne hors ligne.
 
-### Sur Android (APK, sans passer par le store)
-
-Un APK est publié en pièce jointe de chaque [release](../../releases), et à chaque exécution du
-workflow **APK Android** (onglet Actions → artefact `dictadapt-apk`).
-
-Sur le téléphone ou la tablette : autoriser l'installation depuis cette source, puis ouvrir le
-fichier `.apk`.
+> L'APK Android (Capacitor) est mise de côté sur la branche `apk-capacitor` (tag `apk-v1`), en
+> attendant une application commune DysAdapt/Dictadapt.
 
 ## Transmettre une dictée à l'élève
 
@@ -84,20 +79,6 @@ En pratique on ne lance pas cette image seule : le service `dictee` de
 [`docker-compose.yml`](https://github.com/MarineChap/dysadapt) de DysAdapt la construit depuis un
 clone voisin de ce dépôt.
 
-### Android
-
-```bash
-npm run cap:sync     # build + copie dans android/
-npm run cap:android  # ouvre Android Studio
-```
-
-Signer une release nécessite quatre secrets de dépôt : `ANDROID_KEYSTORE_BASE64`,
-`ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`. Sans eux, le workflow
-produit un APK de debug, installable de la même façon.
-
-> L'APK déclare la permission `INTERNET` parce que Capacitor sert les fichiers de l'application
-> depuis un serveur local dans la WebView. L'application elle-même n'émet aucune requête réseau.
-
 ## Choix techniques
 
 | | |
@@ -105,10 +86,9 @@ produit un APK de debug, installable de la même façon.
 | Base | Vite 7 · React 19 · TypeScript · Tailwind v4 |
 | Hors ligne | `vite-plugin-pwa` (Workbox), tout est précaché (~10 Mo) |
 | OCR | `tesseract.js` 6, modèle français `best_int`, worker et WASM servis localement |
-| Voix | `speechSynthesis` sur le web, TTS système via Capacitor sur Android |
+| Voix | `speechSynthesis`, voix locales de l'appareil uniquement |
 | Stockage | IndexedDB (dictées, photos, progression) et localStorage (préférences) |
 | Partage | QR code — JSON compact, `deflate`, base64url, découpé si besoin |
-| Android | Capacitor 7, `fr.dysadapt.dictadapt` |
 
 Le design reprend **à l'identique** le système de DysAdapt : mêmes variables de couleur, même
 palette sombre « Soft Amethyst », même correctif de contraste WCAG AA, mêmes rayons, mêmes

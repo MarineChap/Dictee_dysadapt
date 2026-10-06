@@ -6,18 +6,6 @@ dist-ssr/
 .vite/
 coverage/
 
-# Capacitor / Android
-android/.gradle/
-android/app/build/
-android/build/
-android/local.properties
-android/app/release/
-android/capacitor-cordova-android-plugins/
-*.apk
-*.aab
-*.keystore
-*.jks
-
 # PWA build artefacts
 dev-dist/
 public/sw.js

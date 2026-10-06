@@ -6,7 +6,7 @@
  */
 import { createWorker, type Worker } from 'tesseract.js';
 
-/** Vite rewrites BASE_URL for the GitHub Pages sub-path; Capacitor keeps '/'. */
+/** Vite rewrites BASE_URL for the sub-path the app is served under. */
 function assetPath(file: string): string {
   const base = import.meta.env.BASE_URL || '/';
   return `${base.endsWith('/') ? base : `${base}/`}tesseract/${file}`;

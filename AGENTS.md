@@ -25,11 +25,12 @@ These are the product, not implementation details. Do not break them:
 ## Stack
 
 - **Build**: Vite 7 · React 19 · TypeScript (strict) · Tailwind CSS v4 (CSS-first, no config file)
-- **Router**: `react-router-dom` with **HashRouter** — works under a GitHub Pages sub-path and
-  under Capacitor's local scheme alike
+- **Router**: `react-router-dom` with **HashRouter** — works under any sub-path with no server
+  rewrite
 - **Offline**: `vite-plugin-pwa` (`generateSW`)
 - **OCR**: `tesseract.js` 6, French `best_int` model
-- **Android**: Capacitor 7 (`android/` is committed; its generated files are gitignored)
+- **Android**: none on `main`. The Capacitor APK is parked on branch `apk-capacitor` (tag
+  `apk-v1`) until a combined DysAdapt/Dictadapt app; do not reintroduce it here.
 - **Self-hosting**: `Dockerfile` (Vite build → nginx) + `docker/default.conf.template`
 
 ## Directory structure
@@ -40,7 +41,7 @@ src/
 │   ├── segment.ts    French splitting — the heart of the tool
 │   ├── ocr.ts        Tesseract worker + French text cleanup
 │   ├── image.ts      Canvas preprocessing (grey, Otsu, rotation)
-│   ├── speech.ts     TTS adapter: Web Speech API / Capacitor native
+│   ├── speech.ts     TTS adapter: Web Speech API, local voices only
 │   ├── share.ts      QR payload: deflate + base64url + multi-code splitting
 │   ├── db.ts         IndexedDB (dictations, blobs, progress)
 │   ├── storage.ts    localStorage settings

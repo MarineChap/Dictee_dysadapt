@@ -4,7 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 import path from 'node:path';
 
 // `VITE_BASE` lets the GitHub Pages workflow serve the app from a sub-path
-// (/Dictee_dysadapt/) while local dev and the Capacitor bundle stay at the root.
+// (/Dictee_dysadapt/) while local dev stays at the root.
 const base = process.env.VITE_BASE ?? '/';
 
 export default defineConfig({

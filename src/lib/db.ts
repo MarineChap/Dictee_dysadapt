@@ -1,7 +1,7 @@
 /**
  * Local-only persistence. There is no server, no account and no sync: a
- * dictation lives in the browser (or the APK's WebView) of the device it was
- * created on, and travels to the pupil's device as a QR code.
+ * dictation lives in the browser of the device it was created on, and travels
+ * to the pupil's device as a QR code.
  *
  * IndexedDB rather than localStorage because we store the source photo as a
  * Blob, and v2 will add one recorded audio Blob per segment.

@@ -20,7 +20,6 @@ import {
 import { nanoid } from 'nanoid';
 import PageShell from '@/components/PageShell';
 import ConfirmDialog from '@/components/ConfirmDialog';
-import { isNativePlatform } from '@/lib/platform';
 import { useDictations } from '@/hooks/useDictations';
 import { deleteDictation, saveDictation } from '@/lib/db';
 import { decodeDictationFile } from '@/lib/file';
@@ -135,20 +134,16 @@ export default function Accueil() {
       title="Mes dictées"
       headerRight={
         <>
-          {/* Web-only bridge back to the ecosystem: the native app is a
-              standalone shell and skips it rather than opening a browser. */}
-          {!isNativePlatform() && (
-            <a
-              href="https://dysadapt.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 pl-3 pr-2.5 py-1.5 rounded-xl text-sm font-bold text-primary bg-primary-muted hover:bg-primary hover:text-white transition-all active:scale-95"
-            >
-              DysAdapt
-              <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
-              <span className="sr-only">(ouvrir dysadapt.com)</span>
-            </a>
-          )}
+          <a
+            href="https://dysadapt.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 pl-3 pr-2.5 py-1.5 rounded-xl text-sm font-bold text-primary bg-primary-muted hover:bg-primary hover:text-white transition-all active:scale-95"
+          >
+            DysAdapt
+            <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
+            <span className="sr-only">(ouvrir dysadapt.com)</span>
+          </a>
           <Link
             to="/reglages"
             aria-label="Réglages"

@@ -2,12 +2,7 @@
  * Reading a segment aloud.
  *
  * The pupil may have no network, so we only ever use voices the device can
- * synthesise locally. On the web that means `SpeechSynthesisVoice.localService`;
- * inside the Android APK it means the system TTS engine, which Capacitor
- * exposes through `@capacitor-community/text-to-speech`.
- *
- * The Capacitor plugin is resolved lazily and defensively: the same bundle runs
- * as a web page, where the plugin simply is not there.
+ * synthesise locally: `SpeechSynthesisVoice.localService`.
  */
 
 export interface Voice {
@@ -18,30 +13,8 @@ export interface Voice {
   local: boolean;
 }
 
-interface NativeTts {
-  speak(options: {
-    text: string;
-    lang: string;
-    rate: number;
-    pitch: number;
-    category: string;
-  }): Promise<void>;
-  stop(): Promise<void>;
-}
-
-type CapacitorGlobal = {
-  isNativePlatform?: () => boolean;
-  Plugins?: { TextToSpeech?: NativeTts };
-};
-
-function nativeTts(): NativeTts | null {
-  const cap = (globalThis as { Capacitor?: CapacitorGlobal }).Capacitor;
-  if (!cap?.isNativePlatform?.()) return null;
-  return cap.Plugins?.TextToSpeech ?? null;
-}
-
 export function isSpeechSupported(): boolean {
-  return nativeTts() !== null || typeof globalThis.speechSynthesis !== 'undefined';
+  return typeof globalThis.speechSynthesis !== 'undefined';
 }
 
 function frenchVoices(): SpeechSynthesisVoice[] {
@@ -93,7 +66,6 @@ export function resolveVoice(voiceURI?: string): SpeechSynthesisVoice | undefine
 
 /** True when nothing can be spoken without the network. Drives the warning banner. */
 export function hasOfflineFrenchVoice(): boolean {
-  if (nativeTts() !== null) return true;
   return frenchVoices().some((v) => v.localService);
 }
 
@@ -152,11 +124,6 @@ export interface SpeakOptions {
 }
 
 export function cancelSpeech(): void {
-  const native = nativeTts();
-  if (native) {
-    void native.stop().catch(() => undefined);
-    return;
-  }
   if (typeof globalThis.speechSynthesis !== 'undefined') speechSynthesis.cancel();
 }
 
@@ -170,19 +137,6 @@ export function speak(text: string, options: SpeakOptions = {}): void {
   const trimmed = spoken.trim();
   if (!trimmed) {
     onEnd?.();
-    return;
-  }
-
-  const native = nativeTts();
-  if (native) {
-    void native
-      .stop()
-      .catch(() => undefined)
-      .then(() =>
-        native.speak({ text: trimmed, lang: 'fr-FR', rate, pitch: 1, category: 'playback' })
-      )
-      .then(() => onEnd?.())
-      .catch(() => onError?.());
     return;
   }
 
