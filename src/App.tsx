@@ -12,6 +12,7 @@ export default function App() {
       <Route path="/" element={<Accueil />} />
       <Route path="/nouvelle" element={<NouvelleDictee />} />
       <Route path="/dictee/:id" element={<DicteeDetail />} />
+      <Route path="/eleve/casier/:assignmentId" element={<ModeEleve />} />
       <Route path="/eleve/:id" element={<ModeEleve />} />
       <Route path="/scanner" element={<Scanner />} />
       <Route path="/reglages" element={<Reglages />} />

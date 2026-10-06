@@ -103,3 +103,59 @@ export async function deleteRemote(id: string): Promise<void> {
     if (!(err instanceof RemoteError && err.status === 404)) throw err;
   }
 }
+
+// --- Students' lockers ---
+
+export interface Student {
+  id: string;
+  name: string;
+}
+
+/** A student whose locker holds the dictation. */
+export interface AssignedStudent {
+  assignment_id: string;
+  profile_id: string;
+  profile_name: string;
+}
+
+/** What the pupil's screen gets from a locker: the parts, never the source text. */
+export interface PupilDictation {
+  assignment_id: string;
+  dictation_id: string;
+  profile_id: string;
+  title: string;
+  segments: { id: string; text: string }[];
+  speech: RemoteDictation['speech'];
+  show_word_count: boolean;
+  listened: string[];
+}
+
+export function listStudents(): Promise<Student[]> {
+  return call('/profiles');
+}
+
+export function studentsOf(dictationId: string): Promise<AssignedStudent[]> {
+  return call(`/dictations/${dictationId}/assignments`);
+}
+
+export function assignTo(dictationId: string, profileIds: string[]): Promise<AssignedStudent[]> {
+  return call(`/dictations/${dictationId}/assignments`, {
+    method: 'POST',
+    body: JSON.stringify({ profile_ids: profileIds }),
+  });
+}
+
+export function unassign(assignmentId: string): Promise<void> {
+  return call(`/dictation-assignments/${assignmentId}`, { method: 'DELETE' });
+}
+
+export function pupilDictation(assignmentId: string): Promise<PupilDictation> {
+  return call(`/dictation-assignments/${assignmentId}`);
+}
+
+export function savePupilProgress(assignmentId: string, listened: string[]): Promise<void> {
+  return call(`/dictation-assignments/${assignmentId}/progress`, {
+    method: 'PUT',
+    body: JSON.stringify({ listened }),
+  });
+}

@@ -27,6 +27,7 @@ import { saveDictation } from '@/lib/db';
 import { decodeDictationFile } from '@/lib/file';
 import { newDictationId } from '@/lib/ids';
 import { addToAccount, localOnly, removeFromLibrary, saveToLibrary } from '@/lib/library';
+import { studentsOf } from '@/lib/remote';
 import type { Dictation } from '@/lib/types';
 
 function formatDate(timestamp: number): string {
@@ -37,12 +38,19 @@ function formatDate(timestamp: number): string {
   });
 }
 
+/** "Léa", "Léa et Léo", "Léa, Léo et Zoé". */
+function formatNames(names: string[]): string {
+  return names.length > 1 ? `${names.slice(0, -1).join(', ')} et ${names.at(-1)}` : names[0];
+}
+
 export default function Accueil() {
   const { dictations, loading, error, refresh } = useDictations();
   const { account } = useAccount();
   const [adding, setAdding] = useState(false);
   const notInAccount = account ? localOnly(dictations) : [];
   const [pendingDelete, setPendingDelete] = useState<Dictation | null>(null);
+  // Students whose locker holds the dictation about to be deleted.
+  const [lockersHit, setLockersHit] = useState<string[]>([]);
   const [importError, setImportError] = useState<string | null>(null);
   // Inline rename on a card: the id being edited and its working title. An
   // imported dictation has no teacher page, so the card is the only place to
@@ -128,6 +136,15 @@ export default function Accueil() {
       account
     );
     refresh();
+  }
+
+  function askDelete(dictation: Dictation) {
+    setPendingDelete(dictation);
+    setLockersHit([]);
+    if (!dictation.ownerId) return;
+    studentsOf(dictation.id)
+      .then((students) => setLockersHit(students.map((s) => s.profile_name)))
+      .catch(() => undefined);
   }
 
   async function confirmDelete() {
@@ -406,7 +423,7 @@ export default function Accueil() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setPendingDelete(dictation)}
+                  onClick={() => askDelete(dictation)}
                   aria-label={`Supprimer ${dictation.title}`}
                   className="p-2.5 rounded-xl text-slate-400 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 transition-colors"
                 >
@@ -433,7 +450,13 @@ export default function Accueil() {
         title="Supprimer cette dictée ?"
         description={
           pendingDelete
-            ? `« ${pendingDelete.title} » sera effacée de cet appareil. Cette action est définitive.`
+            ? `« ${pendingDelete.title} » sera effacée de cet appareil${
+                pendingDelete.ownerId ? ' et de votre compte' : ''
+              }.${
+                lockersHit.length
+                  ? ` Elle sera aussi retirée du casier de ${formatNames(lockersHit)}.`
+                  : ''
+              } Cette action est définitive.`
             : ''
         }
         confirmLabel="Supprimer"

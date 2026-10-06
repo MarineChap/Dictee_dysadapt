@@ -33,6 +33,11 @@ export function dashboardUrl(): string {
   return `${DYSADAPT_URL}/dashboard`;
 }
 
+/** The student's locker in DysAdapt, where a pupil goes back to. */
+export function lockerUrl(profileId: string): string {
+  return `${DYSADAPT_URL}/dashboard/profile/${profileId}/student`;
+}
+
 function lastKnown(): Account | null {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);

@@ -3,6 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Check, RotateCcw, Volume2 } from 'lucide-react';
 import DictadaptLogo from '@/components/DictadaptLogo';
 import { clearProgress, getDictation, getProgress, saveProgress } from '@/lib/db';
+import { lockerUrl } from '@/lib/account';
+import { pupilDictation, savePupilProgress } from '@/lib/remote';
 import { cancelSpeech, speak } from '@/lib/speech';
 import { countWords } from '@/lib/segment';
 import type { Dictation } from '@/lib/types';
@@ -14,16 +16,54 @@ import type { Dictation } from '@/lib/types';
  * the text: this is a dictation, the child listens and writes. Tapping plays
  * the part; tapping again replays it, as many times as needed. A part that has
  * been heard turns green, so the child always knows where they are.
+ *
+ * Opened from a DysAdapt locker (`/eleve/casier/:assignmentId`), the dictation
+ * and the pupil's progress come from the account instead of this device.
  */
 export default function ModeEleve() {
-  const { id } = useParams<{ id: string }>();
+  const { id, assignmentId } = useParams<{ id: string; assignmentId: string }>();
   const navigate = useNavigate();
+  // Set when the dictation comes from a student's locker in DysAdapt.
+  const [lockerOf, setLockerOf] = useState<string | null>(null);
 
   const [dictation, setDictation] = useState<Dictation | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [listened, setListened] = useState<Set<string>>(new Set());
   const [speakingId, setSpeakingId] = useState<string | null>(null);
   const repeatTimer = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!assignmentId) return;
+    let cancelled = false;
+    pupilDictation(assignmentId)
+      .then((pupil) => {
+        if (cancelled) return;
+        setLockerOf(pupil.profile_id);
+        setDictation({
+          id: pupil.dictation_id,
+          title: pupil.title,
+          createdAt: 0,
+          updatedAt: 0,
+          sourceText: '',
+          segments: pupil.segments,
+          speech: {
+            rate: pupil.speech.rate,
+            voiceURI: pupil.speech.voice_uri ?? undefined,
+            repeatAfterMs: pupil.speech.repeat_after_ms,
+            speakPunctuation: pupil.speech.speak_punctuation ?? undefined,
+          },
+          showWordCount: pupil.show_word_count,
+          allowReveal: false,
+        });
+        setListened(new Set(pupil.listened));
+      })
+      .catch(() => {
+        if (!cancelled) setNotFound(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [assignmentId]);
 
   useEffect(() => {
     if (!id) return;
@@ -89,7 +129,7 @@ export default function ModeEleve() {
       if (current.has(segmentId)) return current;
       const next = new Set(current);
       next.add(segmentId);
-      void saveProgress({ dictationId: dictation.id, listened: [...next], updatedAt: 0 });
+      keepProgress([...next]);
       return next;
     });
   }
@@ -100,22 +140,40 @@ export default function ModeEleve() {
     setSpeakingId(null);
   }
 
+  function keepProgress(heard: string[]) {
+    if (!dictation) return;
+    if (assignmentId) {
+      // Best effort: the parts stay green on screen even if the save fails.
+      void savePupilProgress(assignmentId, heard).catch(() => undefined);
+    } else {
+      void saveProgress({ dictationId: dictation.id, listened: heard, updatedAt: 0 });
+    }
+  }
+
   async function restart() {
     if (!dictation) return;
     stop();
     setListened(new Set());
-    await clearProgress(dictation.id);
+    if (assignmentId) keepProgress([]);
+    else await clearProgress(dictation.id);
+  }
+
+  function leave() {
+    if (lockerOf) window.location.assign(lockerUrl(lockerOf));
+    else navigate('/');
   }
 
   if (notFound) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 p-6 text-center">
         <p className="font-black text-slate-900 dark:text-white">
-          Cette dictée n&apos;existe plus.
+          {assignmentId
+            ? "Cette dictée n'est plus dans ton casier."
+            : "Cette dictée n'existe plus."}
         </p>
         <button
           type="button"
-          onClick={() => navigate('/')}
+          onClick={() => (assignmentId ? window.history.back() : navigate('/'))}
           className="bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-lg text-sm font-bold shadow-lg shadow-primary-muted transition-all active:scale-95"
         >
           Retour
@@ -146,7 +204,7 @@ export default function ModeEleve() {
           </p>
           <button
             type="button"
-            onClick={() => navigate('/')}
+            onClick={leave}
             aria-label="Quitter la dictée"
             className="p-2 rounded-xl text-slate-400 dark:text-slate-500 hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >

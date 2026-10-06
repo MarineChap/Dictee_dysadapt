@@ -156,3 +156,62 @@ describe('Mode élève', () => {
     expect(await screen.findByText('bibliothèque')).toBeInTheDocument();
   });
 });
+
+describe('Mode élève from a DysAdapt locker', () => {
+  const ASSIGNMENT = 'assign-1';
+  let progressSent: string[][];
+
+  function renderFromLocker() {
+    return render(
+      <MemoryRouter initialEntries={[`/eleve/casier/${ASSIGNMENT}`]}>
+        <Routes>
+          <Route path="/eleve/casier/:assignmentId" element={<ModeEleve />} />
+        </Routes>
+      </MemoryRouter>
+    );
+  }
+
+  beforeEach(() => {
+    progressSent = [];
+    vi.stubGlobal('fetch', (url: string, init: RequestInit = {}) => {
+      if (url.endsWith(`/dictation-assignments/${ASSIGNMENT}/progress`)) {
+        progressSent.push(JSON.parse(String(init.body)).listened);
+        return Promise.resolve(new Response(JSON.stringify({ listened: [] })));
+      }
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            assignment_id: ASSIGNMENT,
+            dictation_id: 'dict-1',
+            profile_id: 'lea',
+            title: 'Dictée du casier',
+            segments: SEGMENTS.map((text, index) => ({ id: `s${index}`, text })),
+            speech: { rate: 0.85, voice_uri: null, repeat_after_ms: 0, speak_punctuation: true },
+            show_word_count: false,
+            listened: ['s0'],
+          })
+        )
+      );
+    });
+  });
+
+  it("resumes the pupil's progress from the account and never shows the text", async () => {
+    const { container } = renderFromLocker();
+
+    expect(
+      await screen.findByRole('button', { name: /Écouter la partie 1, déjà écoutée/ })
+    ).toBeInTheDocument();
+    for (const word of ['chat', 'fauteuil', 'fenêtre']) {
+      expect(container.innerHTML).not.toContain(word);
+    }
+  });
+
+  it('saves each part heard in the account', async () => {
+    const user = userEvent.setup();
+    renderFromLocker();
+
+    await user.click(await screen.findByRole('button', { name: /Écouter la partie 3/ }));
+
+    await waitFor(() => expect(progressSent).toEqual([['s0', 's2']]));
+  });
+});

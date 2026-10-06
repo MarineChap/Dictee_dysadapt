@@ -4,11 +4,12 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { FileDown, Play, QrCode, Save } from 'lucide-react';
 import PageShell from '@/components/PageShell';
 import QrShare from '@/components/QrShare';
+import LockerPanel from '@/components/LockerPanel';
 import SegmentEditor from '@/components/SegmentEditor';
 import SpeechSettingsFields from '@/components/SpeechSettingsFields';
 import { getDictation } from '@/lib/db';
-import { useAccount } from '@/hooks/useAccount';
-import { saveToLibrary } from '@/lib/library';
+import { accountOnce, useAccount } from '@/hooks/useAccount';
+import { loadLibrary, saveToLibrary } from '@/lib/library';
 import { reconcileSegmentIds, sameWords } from '@/lib/segment';
 import { FILE_MIME, dictationFileName, encodeDictationFile } from '@/lib/file';
 import { cancelSpeech, speak } from '@/lib/speech';
@@ -28,21 +29,30 @@ export default function DicteeDetail() {
   useEffect(() => {
     if (!id) return;
     let cancelled = false;
-    void getDictation(id).then((found) => {
-      if (cancelled) return;
-      if (!found) {
-        setNotFound(true);
-        return;
-      }
-      // A dictation received here (QR or file) has no teacher mode: no source
-      // text to read, nothing to edit. Bounce it straight to the pupil screen
-      // so this page can never expose it.
-      if (found.imported) {
-        navigate(`/eleve/${found.id}`, { replace: true });
-        return;
-      }
-      setDictation(found);
-    });
+    // Not on this device yet (opened from a link on a new device): the account may have it.
+    void getDictation(id)
+      .then(
+        (local) =>
+          local ??
+          accountOnce()
+            .then(loadLibrary)
+            .then(() => getDictation(id))
+      )
+      .then((found) => {
+        if (cancelled) return;
+        if (!found) {
+          setNotFound(true);
+          return;
+        }
+        // A dictation received here (QR or file) has no teacher mode: no source
+        // text to read, nothing to edit. Bounce it straight to the pupil screen
+        // so this page can never expose it.
+        if (found.imported) {
+          navigate(`/eleve/${found.id}`, { replace: true });
+          return;
+        }
+        setDictation(found);
+      });
     return () => {
       cancelled = true;
     };
@@ -128,6 +138,8 @@ export default function DicteeDetail() {
           Exporter (fichier)
         </button>
       </div>
+
+      {account && dictation.ownerId === account.id && <LockerPanel dictationId={dictation.id} />}
 
       {showQr && (
         <section className="mb-8 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
