@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   AlertTriangle,
+  ArrowLeft,
   Camera,
   Check,
   Keyboard,
@@ -467,6 +468,16 @@ export default function NouvelleDictee() {
               2 »… qu&apos;il peut réécouter autant de fois qu&apos;il veut.
             </p>
           </div>
+
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => setStage('decoupage')}
+            className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-xs uppercase tracking-widest border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-primary hover:text-primary transition-all active:scale-95 disabled:opacity-50"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Revenir au découpage
+          </button>
 
           <button
             type="button"
