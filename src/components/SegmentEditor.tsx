@@ -1,4 +1,5 @@
-import { Link2, Volume2 } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Link2, Pencil, Volume2 } from 'lucide-react';
 import { countWords } from '@/lib/segment';
 
 interface SegmentEditorProps {
@@ -12,8 +13,9 @@ interface SegmentEditorProps {
 
 /**
  * Touch-first correction of the automatic split. No automatic segmentation is
- * ever perfect in French, so the teacher gets two gestures and nothing else:
- * tap a word to cut before it, tap the link between two parts to glue them.
+ * ever perfect in French, so the teacher gets three gestures: tap a word to cut
+ * before it, tap "Réunir" between two parts to glue them, or tap the pencil to
+ * retype a part — a missed word should never mean starting the dictation over.
  */
 export default function SegmentEditor({
   segments,
@@ -21,6 +23,34 @@ export default function SegmentEditor({
   onPreview,
   speakingIndex = null,
 }: SegmentEditorProps) {
+  const [editing, setEditing] = useState<{ index: number; draft: string } | null>(null);
+  // Enter or Escape closes the input, which may still fire a blur on its way
+  // out: the edit is already settled by then, so the blur must do nothing.
+  const closedRef = useRef(false);
+
+  function startEditing(segmentIndex: number) {
+    closedRef.current = false;
+    setEditing({ index: segmentIndex, draft: segments[segmentIndex] });
+  }
+
+  function commitEdit() {
+    if (!editing || closedRef.current) return;
+    closedRef.current = true;
+    const text = editing.draft.replace(/\s+/g, ' ').trim();
+    setEditing(null);
+    if (text === segments[editing.index]) return;
+    const next = [...segments];
+    // An emptied part is a deleted part.
+    if (text) next.splice(editing.index, 1, text);
+    else next.splice(editing.index, 1);
+    onChange(next);
+  }
+
+  function cancelEdit() {
+    closedRef.current = true;
+    setEditing(null);
+  }
+
   function splitAt(segmentIndex: number, wordIndex: number) {
     const words = segments[segmentIndex].split(' ');
     if (wordIndex <= 0 || wordIndex >= words.length) return;
@@ -44,14 +74,16 @@ export default function SegmentEditor({
   return (
     <div>
       <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-        Touchez un <span className="font-bold">mot</span> pour couper juste avant, ou le{' '}
-        <span className="font-bold">trait</span> entre deux parties pour les réunir.
+        Touchez un <span className="font-bold">mot</span> pour couper juste avant,{' '}
+        <span className="font-bold">Réunir</span> pour coller deux parties, ou le{' '}
+        <span className="font-bold">crayon</span> pour corriger le texte d&apos;une partie.
       </p>
 
       <ol className="space-y-1" data-testid="segment-list">
         {segments.map((segment, segmentIndex) => {
           const words = segment.split(' ');
           const isSpeaking = speakingIndex === segmentIndex;
+          const isEditing = editing?.index === segmentIndex;
 
           return (
             <li key={`${segmentIndex}-${segment}`}>
@@ -66,29 +98,56 @@ export default function SegmentEditor({
                   {segmentIndex + 1}
                 </span>
 
-                <div className="flex-1 min-w-0 flex flex-wrap items-center gap-x-0.5 gap-y-1 reading-text">
-                  {words.map((word, wordIndex) => (
-                    <button
-                      key={`${wordIndex}-${word}`}
-                      type="button"
-                      disabled={wordIndex === 0}
-                      onClick={() => splitAt(segmentIndex, wordIndex)}
-                      title={wordIndex === 0 ? undefined : `Couper avant « ${word} »`}
-                      className={`px-1 rounded-md transition-colors ${
-                        wordIndex === 0
-                          ? 'cursor-default text-slate-900 dark:text-slate-100'
-                          : 'text-slate-900 dark:text-slate-100 hover:bg-primary-muted hover:text-primary'
-                      }`}
-                    >
-                      {word}
-                    </button>
-                  ))}
-                </div>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editing.draft}
+                    autoFocus
+                    aria-label={`Texte de la partie ${segmentIndex + 1}`}
+                    onChange={(event) => setEditing({ index: segmentIndex, draft: event.target.value })}
+                    onBlur={commitEdit}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') commitEdit();
+                      if (event.key === 'Escape') cancelEdit();
+                    }}
+                    className="reading-text flex-1 min-w-0 px-3 py-1.5 rounded-xl border border-primary bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none"
+                  />
+                ) : (
+                  <div className="flex-1 min-w-0 flex flex-wrap items-center gap-x-0.5 gap-y-1 reading-text">
+                    {words.map((word, wordIndex) => (
+                      <button
+                        key={`${wordIndex}-${word}`}
+                        type="button"
+                        disabled={wordIndex === 0}
+                        onClick={() => splitAt(segmentIndex, wordIndex)}
+                        title={wordIndex === 0 ? undefined : `Couper avant « ${word} »`}
+                        className={`px-1 rounded-md transition-colors ${
+                          wordIndex === 0
+                            ? 'cursor-default text-slate-900 dark:text-slate-100'
+                            : 'text-slate-900 dark:text-slate-100 hover:bg-primary-muted hover:text-primary'
+                        }`}
+                      >
+                        {word}
+                      </button>
+                    ))}
+                  </div>
+                )}
 
                 <div className="flex items-center gap-1 flex-shrink-0">
                   <span className="hidden sm:inline text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
                     {countWords(segment)} mot{countWords(segment) > 1 ? 's' : ''}
                   </span>
+                  {!isEditing && (
+                    <button
+                      type="button"
+                      onClick={() => startEditing(segmentIndex)}
+                      aria-label={`Modifier la partie ${segmentIndex + 1}`}
+                      title="Modifier le texte"
+                      className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-primary transition-colors"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => onPreview(segment)}
@@ -106,11 +165,10 @@ export default function SegmentEditor({
                     type="button"
                     onClick={() => mergeWithNext(segmentIndex)}
                     aria-label={`Réunir les parties ${segmentIndex + 1} et ${segmentIndex + 2}`}
-                    className="group flex items-center gap-1.5 px-3 py-1 text-slate-300 dark:text-slate-600 hover:text-primary transition-colors"
+                    className="my-1 flex items-center gap-1.5 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 hover:border-primary hover:text-primary transition-all active:scale-95"
                   >
-                    <span className="h-4 w-px bg-current" />
-                    <Link2 className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity" />
-                    <span className="h-4 w-px bg-current" />
+                    <Link2 className="w-3.5 h-3.5" />
+                    Réunir
                   </button>
                 </div>
               )}

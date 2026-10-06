@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { nanoid } from 'nanoid';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FileDown, Play, QrCode, Save } from 'lucide-react';
 import PageShell from '@/components/PageShell';
@@ -6,6 +7,7 @@ import QrShare from '@/components/QrShare';
 import SegmentEditor from '@/components/SegmentEditor';
 import SpeechSettingsFields from '@/components/SpeechSettingsFields';
 import { getDictation, saveDictation } from '@/lib/db';
+import { reconcileSegmentIds, sameWords } from '@/lib/segment';
 import { FILE_MIME, dictationFileName, encodeDictationFile } from '@/lib/file';
 import { cancelSpeech, speak } from '@/lib/speech';
 import type { Dictation } from '@/lib/types';
@@ -153,14 +155,15 @@ export default function DicteeDetail() {
         </h2>
         <SegmentEditor
           segments={dictation.segments.map((segment) => segment.text)}
-          onChange={(texts) =>
+          onChange={(texts) => {
+            const joined = texts.join(' ');
             patch({
-              segments: texts.map((text, index) => ({
-                id: dictation.segments[index]?.id ?? `seg-${index}-${Date.now()}`,
-                text,
-              })),
-            })
-          }
+              segments: reconcileSegmentIds(dictation.segments, texts, () => nanoid(8)),
+              // Keep the source text in step once a word is added or fixed, but
+              // leave it untouched (line breaks and all) after a mere cut or glue.
+              ...(sameWords(joined, dictation.sourceText) ? {} : { sourceText: joined }),
+            });
+          }}
           onPreview={(text) =>
             speak(text, {
               rate: dictation.speech.rate,

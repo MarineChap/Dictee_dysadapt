@@ -319,3 +319,28 @@ export function segmentText(text: string, options: Partial<SegmentOptions> = {})
 
   return balanced.map((part) => part.join(' ')).filter((part) => part.length > 0);
 }
+
+/** True when both texts hold the same words in the same order, whatever the spacing. */
+export function sameWords(a: string, b: string): boolean {
+  return a.replace(/\s+/g, ' ').trim() === b.replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Gives edited parts their ids back. A part whose text is unchanged keeps its
+ * id — and with it the pupil's "already heard" mark, which is keyed on it. A
+ * part that was retyped, cut or glued gets a fresh id: it is new to the pupil,
+ * so it must not show up green.
+ */
+export function reconcileSegmentIds<T extends { id: string; text: string }>(
+  previous: T[],
+  texts: string[],
+  newId: () => string
+): { id: string; text: string }[] {
+  const unused = [...previous];
+  return texts.map((text) => {
+    const match = unused.findIndex((segment) => segment.text === text);
+    if (match === -1) return { id: newId(), text };
+    const [kept] = unused.splice(match, 1);
+    return { id: kept.id, text };
+  });
+}

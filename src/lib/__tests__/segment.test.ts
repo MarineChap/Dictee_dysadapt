@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { countWords, segmentText, DEFAULT_SEGMENT_OPTIONS } from '../segment';
+import {
+  countWords,
+  reconcileSegmentIds,
+  sameWords,
+  segmentText,
+  DEFAULT_SEGMENT_OPTIONS,
+} from '../segment';
 
 const opts = DEFAULT_SEGMENT_OPTIONS;
 
@@ -133,5 +139,52 @@ describe('segmentText', () => {
       'puis la nuit tomba doucement sur le port.';
     const once = segmentText(source);
     expect(segmentText(once.join(' '))).toEqual(once);
+  });
+});
+
+describe('reconcileSegmentIds', () => {
+  const previous = [
+    { id: 'a', text: 'Le chat' },
+    { id: 'b', text: 'dort au soleil.' },
+    { id: 'c', text: 'Il rêve.' },
+  ];
+  let counter = 0;
+  const newId = () => `new-${++counter}`;
+
+  it('keeps the ids of untouched parts and renews the edited one', () => {
+    counter = 0;
+    const result = reconcileSegmentIds(
+      previous,
+      ['Le chat', 'dort tranquillement au soleil.', 'Il rêve.'],
+      newId
+    );
+    expect(result.map((s) => s.id)).toEqual(['a', 'new-1', 'c']);
+  });
+
+  it('renews both halves of a cut part and keeps the parts around it', () => {
+    counter = 0;
+    const result = reconcileSegmentIds(
+      previous,
+      ['Le chat', 'dort', 'au soleil.', 'Il rêve.'],
+      newId
+    );
+    expect(result.map((s) => s.id)).toEqual(['a', 'new-1', 'new-2', 'c']);
+  });
+
+  it('never hands the same id to two identical parts', () => {
+    counter = 0;
+    const twins = [
+      { id: 'x', text: 'encore' },
+      { id: 'y', text: 'encore' },
+    ];
+    const result = reconcileSegmentIds(twins, ['encore', 'encore', 'encore'], newId);
+    expect(result.map((s) => s.id)).toEqual(['x', 'y', 'new-1']);
+  });
+});
+
+describe('sameWords', () => {
+  it('ignores spacing and line breaks', () => {
+    expect(sameWords('Le chat\n  dort.', 'Le chat dort.')).toBe(true);
+    expect(sameWords('Le chat dort.', 'Le gros chat dort.')).toBe(false);
   });
 });

@@ -6,6 +6,7 @@ import {
   Check,
   Keyboard,
   Loader2,
+  PenLine,
   RotateCw,
   ScanLine,
   Sparkles,
@@ -18,7 +19,7 @@ import SegmentEditor from '@/components/SegmentEditor';
 import SpeechSettingsFields from '@/components/SpeechSettingsFields';
 import { canvasToBlob, prepareForOcr } from '@/lib/image';
 import { recognise, terminateOcr } from '@/lib/ocr';
-import { DEFAULT_SEGMENT_OPTIONS, segmentText } from '@/lib/segment';
+import { DEFAULT_SEGMENT_OPTIONS, sameWords, segmentText } from '@/lib/segment';
 import { putBlob, saveDictation } from '@/lib/db';
 import { cancelSpeech, speak } from '@/lib/speech';
 import { useSettings } from '@/hooks/useSettings';
@@ -120,6 +121,17 @@ export default function NouvelleDictee() {
   function goToSegments() {
     setSegments(segmentText(text, { maxWords }));
     setStage('decoupage');
+  }
+
+  /**
+   * Back to the full text for a bigger correction. Words fixed in the parts
+   * are carried back; when only the cuts changed, the original text is kept
+   * as typed, line breaks included. Either way the split is recomputed.
+   */
+  function backToText() {
+    const joined = segments.join(' ');
+    if (!sameWords(joined, text)) setText(joined);
+    setStage('texte');
   }
 
   function resegment(nextMax: number) {
@@ -367,6 +379,18 @@ export default function NouvelleDictee() {
               })
             }
           />
+
+          <button
+            type="button"
+            onClick={backToText}
+            className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-black text-xs uppercase tracking-widest border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-primary hover:text-primary transition-all active:scale-95"
+          >
+            <PenLine className="w-5 h-5" />
+            Revenir au texte
+          </button>
+          <p className="-mt-3 text-xs text-center text-slate-500 dark:text-slate-400">
+            Le découpage sera recalculé quand vous reviendrez ici.
+          </p>
 
           <button
             type="button"

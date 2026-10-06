@@ -2,21 +2,30 @@ import { describe, expect, it } from 'vitest';
 import { spellPunctuation } from '../speech';
 
 describe('spellPunctuation', () => {
-  it('says a trailing period out loud', () => {
-    expect(spellPunctuation('près de la fenêtre.')).toBe('près de la fenêtre point');
+  // The mark is kept before its name so the voice still drops at the end of
+  // the sentence (or pauses at a comma) instead of reading on in one breath.
+  it('keeps the full stop before saying it, so the voice drops first', () => {
+    expect(spellPunctuation('près de la fenêtre.')).toBe('près de la fenêtre. point.');
   });
 
-  it('says a comma out loud', () => {
-    expect(spellPunctuation('dormait sur le fauteuil,')).toBe('dormait sur le fauteuil virgule');
+  it('keeps the comma pause before saying it', () => {
+    expect(spellPunctuation('dormait sur le fauteuil,')).toBe('dormait sur le fauteuil, virgule,');
+    expect(spellPunctuation('le chat, la souris')).toBe('le chat, virgule, la souris');
   });
 
   it('names each mark the way a teacher dictates it', () => {
-    expect(spellPunctuation('Quoi ?')).toBe("Quoi point d'interrogation");
-    expect(spellPunctuation('Attention !')).toBe("Attention point d'exclamation");
-    expect(spellPunctuation('deux choses : voici')).toBe('deux choses deux-points voici');
-    expect(spellPunctuation('un ; puis')).toBe('un point-virgule puis');
-    expect(spellPunctuation('Il attend...')).toBe('Il attend points de suspension');
-    expect(spellPunctuation('Il attend…')).toBe('Il attend points de suspension');
+    expect(spellPunctuation('Quoi ?')).toBe("Quoi ? point d'interrogation.");
+    expect(spellPunctuation('Attention !')).toBe("Attention ! point d'exclamation.");
+    expect(spellPunctuation('deux choses : voici')).toBe('deux choses : deux-points, voici');
+    expect(spellPunctuation('un ; puis')).toBe('un ; point-virgule, puis');
+    expect(spellPunctuation('Il attend...')).toBe('Il attend... points de suspension.');
+    expect(spellPunctuation('Il attend…')).toBe('Il attend… points de suspension.');
+  });
+
+  it('does not re-read the marks it inserts', () => {
+    expect(spellPunctuation('Il dort. Le chat, lui, joue.')).toBe(
+      'Il dort. point. Le chat, virgule, lui, virgule, joue. point.'
+    );
   });
 
   it('reads out quotes and parentheses', () => {
@@ -31,6 +40,6 @@ describe('spellPunctuation', () => {
   });
 
   it('handles a period tucked before a closing quote', () => {
-    expect(spellPunctuation('fini.»')).toBe('fini point fermez les guillemets');
+    expect(spellPunctuation('fini.»')).toBe('fini. point. fermez les guillemets');
   });
 });
