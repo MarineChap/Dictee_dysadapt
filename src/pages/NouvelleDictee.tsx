@@ -21,7 +21,10 @@ import SpeechSettingsFields from '@/components/SpeechSettingsFields';
 import { canvasToBlob, prepareForOcr } from '@/lib/image';
 import { recognise, terminateOcr } from '@/lib/ocr';
 import { DEFAULT_SEGMENT_OPTIONS, sameWords, segmentText } from '@/lib/segment';
-import { putBlob, saveDictation } from '@/lib/db';
+import { putBlob } from '@/lib/db';
+import { accountOnce } from '@/hooks/useAccount';
+import { newDictationId } from '@/lib/ids';
+import { saveToLibrary } from '@/lib/library';
 import { cancelSpeech, speak } from '@/lib/speech';
 import { useSettings } from '@/hooks/useSettings';
 import type { SpeechSettings } from '@/lib/types';
@@ -143,7 +146,7 @@ export default function NouvelleDictee() {
   async function save() {
     setSaving(true);
     try {
-      const id = nanoid(10);
+      const id = newDictationId();
       const now = Date.now();
       let imageId: string | undefined;
 
@@ -152,18 +155,22 @@ export default function NouvelleDictee() {
         await putBlob(imageId, processedRef.current);
       }
 
-      await saveDictation({
-        id,
-        title: title.trim() || 'Dictée sans titre',
-        createdAt: now,
-        updatedAt: now,
-        sourceText: text.trim(),
-        segments: segments.map((segmentText_) => ({ id: nanoid(8), text: segmentText_ })),
-        speech,
-        showWordCount,
-        allowReveal,
-        imageId,
-      });
+      const account = await accountOnce();
+      await saveToLibrary(
+        {
+          id,
+          title: title.trim() || 'Dictée sans titre',
+          createdAt: now,
+          updatedAt: now,
+          sourceText: text.trim(),
+          segments: segments.map((segmentText_) => ({ id: nanoid(8), text: segmentText_ })),
+          speech,
+          showWordCount,
+          allowReveal,
+          imageId,
+        },
+        account
+      );
 
       await terminateOcr();
       navigate(`/dictee/${id}`, { replace: true });

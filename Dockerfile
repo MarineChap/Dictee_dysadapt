@@ -2,8 +2,9 @@
 #
 # The app has no server side: this image is a bundle plus a file server, and
 # exists so the DysAdapt stack can serve Dictadapt next to the main app under
-# /dictee (see dysadapt/docker-compose.yml). Nothing here reaches the network
-# at runtime — the Tesseract model, the fonts and the voices all ship inside.
+# /dictee (see dysadapt/docker-compose.yml). The Tesseract model, the fonts and
+# the voices all ship inside; the only network use is the optional DysAdapt
+# account, on DysAdapt's own origin.
 
 FROM node:20-alpine AS builder
 WORKDIR /app
@@ -19,6 +20,10 @@ COPY . .
 # `/` suits the standalone bundle; DysAdapt passes `/dictee/`.
 ARG VITE_BASE=/
 ENV VITE_BASE=$VITE_BASE
+# Where DysAdapt's pages are (sign-in, "Mon espace"): empty when Dictadapt is
+# served on DysAdapt's origin (/dictee/), http://localhost:3000 locally.
+ARG VITE_DYSADAPT_URL=
+ENV VITE_DYSADAPT_URL=$VITE_DYSADAPT_URL
 RUN npm run build
 
 
@@ -35,6 +40,8 @@ FROM nginx:alpine AS runner
 # ships, which listens on 80. Rename it and nginx serves both — and binds 80,
 # which collides with the reverse proxy under `network_mode: host`.
 ENV DICTEE_PORT=8081
+# Only used without a reverse proxy (local): where /api/* is forwarded to.
+ENV DICTEE_API_ORIGIN=http://127.0.0.1:3000
 ENV NGINX_ENVSUBST_FILTER=^DICTEE_
 
 COPY docker/default.conf.template /etc/nginx/templates/default.conf.template

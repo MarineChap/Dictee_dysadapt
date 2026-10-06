@@ -38,7 +38,7 @@ export default function Footer() {
 
         <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
           <WifiOff className="w-3.5 h-3.5" />
-          Hors ligne · sans compte
+          Hors ligne · compte facultatif
         </p>
       </div>
     </footer>

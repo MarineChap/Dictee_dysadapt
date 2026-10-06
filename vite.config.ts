@@ -9,6 +9,11 @@ const base = process.env.VITE_BASE ?? '/';
 
 export default defineConfig({
   base,
+  // The DysAdapt account in development: a DysAdapt running on :3000 answers
+  // /api/* (its session cookie on localhost reaches this port too).
+  server: {
+    proxy: { '/api': process.env.DYSADAPT_ORIGIN ?? 'http://localhost:3000' },
+  },
   resolve: {
     alias: { '@': path.resolve(import.meta.dirname, './src') },
   },

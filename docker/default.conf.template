@@ -1,6 +1,7 @@
 # Rendered into /etc/nginx/conf.d/default.conf at container start (envsubst on
-# ${DICTEE_PORT}). Only ${DICTEE_PORT} is substituted — NGINX_ENVSUBST_FILTER in
-# the Dockerfile keeps nginx's own $uri and friends untouched.
+# ${DICTEE_PORT} and ${DICTEE_API_ORIGIN}). Only DICTEE_* variables are
+# substituted — NGINX_ENVSUBST_FILTER in the Dockerfile keeps nginx's own $uri
+# and friends untouched.
 
 server {
     listen       ${DICTEE_PORT};
@@ -31,6 +32,15 @@ server {
 
     location = /manifest.webmanifest {
         add_header Cache-Control "no-cache";
+    }
+
+    # The DysAdapt account (session and API). Behind Caddy, /api/* goes straight
+    # to DysAdapt and never reaches this server. Locally there is no proxy:
+    # forward it, with the cookie, so a teacher signed in to the local DysAdapt
+    # (cookies on localhost ignore the port) is signed in here too.
+    location /api/ {
+        proxy_pass ${DICTEE_API_ORIGIN};
+        proxy_set_header Host $host;
     }
 
     # HashRouter keeps every route behind `#`, so this only catches a reload on

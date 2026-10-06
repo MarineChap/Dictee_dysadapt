@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import DictadaptLogo from './DictadaptLogo';
 import ThemeToggle from './ThemeToggle';
+import AccountButton from './AccountButton';
 
 interface NavbarProps {
   /** Title shown centred on desktop. */
@@ -46,6 +47,7 @@ export default function Navbar({ centerContent, backTo, backLabel, right }: Navb
 
         <div className="flex items-center gap-1">
           {right}
+          <AccountButton />
           <ThemeToggle />
         </div>
       </div>

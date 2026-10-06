@@ -48,6 +48,11 @@ export interface Dictation {
    * only plays it to the pupil. Absent on dictations authored on this device.
    */
   imported?: boolean;
+  /**
+   * The DysAdapt account this dictation is saved in (user id). Absent on a
+   * dictation kept on this device only.
+   */
+  ownerId?: string;
 }
 
 /** Which parts the pupil has already listened to. Survives closing the app. */

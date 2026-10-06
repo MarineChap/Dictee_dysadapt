@@ -6,7 +6,9 @@ import PageShell from '@/components/PageShell';
 import QrShare from '@/components/QrShare';
 import SegmentEditor from '@/components/SegmentEditor';
 import SpeechSettingsFields from '@/components/SpeechSettingsFields';
-import { getDictation, saveDictation } from '@/lib/db';
+import { getDictation } from '@/lib/db';
+import { useAccount } from '@/hooks/useAccount';
+import { saveToLibrary } from '@/lib/library';
 import { reconcileSegmentIds, sameWords } from '@/lib/segment';
 import { FILE_MIME, dictationFileName, encodeDictationFile } from '@/lib/file';
 import { cancelSpeech, speak } from '@/lib/speech';
@@ -21,6 +23,7 @@ export default function DicteeDetail() {
   const [showQr, setShowQr] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [saved, setSaved] = useState(false);
+  const { account } = useAccount();
 
   useEffect(() => {
     if (!id) return;
@@ -55,7 +58,7 @@ export default function DicteeDetail() {
 
   async function save() {
     if (!dictation) return;
-    await saveDictation(dictation);
+    setDictation(await saveToLibrary(dictation, account));
     setDirty(false);
     setSaved(true);
   }

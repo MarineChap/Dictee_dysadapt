@@ -1,7 +1,8 @@
 /**
- * Local-only persistence. There is no server, no account and no sync: a
- * dictation lives in the browser of the device it was created on, and travels
- * to the pupil's device as a QR code.
+ * Local persistence. A dictation lives in the browser of the device it was
+ * created on, and travels to the pupil's device as a QR code. For a teacher
+ * signed in to DysAdapt, it is also saved in the account (see library.ts) and
+ * this store keeps the copy that works offline.
  *
  * IndexedDB rather than localStorage because we store the source photo as a
  * Blob, and v2 will add one recorded audio Blob per segment.
@@ -60,6 +61,31 @@ export async function saveDictation(dictation: Dictation): Promise<Dictation> {
   const stamped = { ...dictation, updatedAt: Date.now() };
   await db.put(STORE_DICTATIONS, stamped);
   return stamped;
+}
+
+/** Stores the dictation exactly as given: a copy of the account's version. */
+export async function putDictation(dictation: Dictation): Promise<void> {
+  const db = await getDb();
+  await db.put(STORE_DICTATIONS, dictation);
+}
+
+/**
+ * Moves a dictation to a new id, its progress with it. The photo keeps its own
+ * key (`imageId`), so it needs no move.
+ */
+export async function rekeyDictation(oldId: string, moved: Dictation): Promise<void> {
+  const db = await getDb();
+  const tx = db.transaction([STORE_DICTATIONS, STORE_PROGRESS], 'readwrite');
+  const progress = (await tx.objectStore(STORE_PROGRESS).get(oldId)) as Progress | undefined;
+  await Promise.all([
+    tx.objectStore(STORE_DICTATIONS).put(moved),
+    tx.objectStore(STORE_DICTATIONS).delete(oldId),
+    progress
+      ? tx.objectStore(STORE_PROGRESS).put({ ...progress, dictationId: moved.id })
+      : Promise.resolve(),
+    tx.objectStore(STORE_PROGRESS).delete(oldId),
+    tx.done,
+  ]);
 }
 
 /** Removes the dictation together with its photo and the pupil's progress. */

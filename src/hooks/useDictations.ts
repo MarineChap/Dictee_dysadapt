@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { listDictations } from '@/lib/db';
+import { accountOnce } from '@/hooks/useAccount';
+import { loadLibrary } from '@/lib/library';
 import type { Dictation } from '@/lib/types';
 
 /**
- * The teacher's local library.
+ * The teacher's library: this device's dictations, plus the account's when
+ * signed in to DysAdapt.
  *
  * `refresh()` bumps a token rather than re-running a fetch directly: state is
  * then only ever written from a promise callback, and a reload that lands after
@@ -18,7 +20,8 @@ export function useDictations() {
   useEffect(() => {
     let cancelled = false;
 
-    listDictations()
+    accountOnce()
+      .then(loadLibrary)
       .then((rows) => {
         if (cancelled) return;
         setDictations(rows);
@@ -38,6 +41,12 @@ export function useDictations() {
   }, [reloadToken]);
 
   const refresh = useCallback(() => setReloadToken((token) => token + 1), []);
+
+  // Back online: send what was saved meanwhile, and pick up changes made elsewhere.
+  useEffect(() => {
+    window.addEventListener('online', refresh);
+    return () => window.removeEventListener('online', refresh);
+  }, [refresh]);
 
   return { dictations, loading, error, refresh };
 }

@@ -4,6 +4,7 @@ import {
   ArrowUpRight,
   BookOpenCheck,
   Camera,
+  CloudUpload,
   Check,
   Copy,
   FileUp,
@@ -20,9 +21,12 @@ import {
 import { nanoid } from 'nanoid';
 import PageShell from '@/components/PageShell';
 import ConfirmDialog from '@/components/ConfirmDialog';
+import { useAccount } from '@/hooks/useAccount';
 import { useDictations } from '@/hooks/useDictations';
-import { deleteDictation, saveDictation } from '@/lib/db';
+import { saveDictation } from '@/lib/db';
 import { decodeDictationFile } from '@/lib/file';
+import { newDictationId } from '@/lib/ids';
+import { addToAccount, localOnly, removeFromLibrary, saveToLibrary } from '@/lib/library';
 import type { Dictation } from '@/lib/types';
 
 function formatDate(timestamp: number): string {
@@ -35,6 +39,9 @@ function formatDate(timestamp: number): string {
 
 export default function Accueil() {
   const { dictations, loading, error, refresh } = useDictations();
+  const { account } = useAccount();
+  const [adding, setAdding] = useState(false);
+  const notInAccount = account ? localOnly(dictations) : [];
   const [pendingDelete, setPendingDelete] = useState<Dictation | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   // Inline rename on a card: the id being edited and its working title. An
@@ -63,7 +70,7 @@ export default function Accueil() {
     // Date.now()/saveDictation live in a promise callback, never in the render
     // path — the same pattern importFile uses to satisfy react-hooks/purity.
     void Promise.resolve()
-      .then(() => saveDictation({ ...dictation, title, updatedAt: Date.now() }))
+      .then(() => saveToLibrary({ ...dictation, title, updatedAt: Date.now() }, account))
       .then(refresh);
   }
 
@@ -81,7 +88,7 @@ export default function Accueil() {
       .text()
       .then((content) => {
         const imported = decodeDictationFile(content);
-        const id = nanoid(10);
+        const id = newDictationId();
         const now = Date.now();
         return saveDictation({
           id,
@@ -103,30 +110,42 @@ export default function Accueil() {
       // reveal (sourceText is empty) and no way in to see one.
       .then((id) => navigate(`/eleve/${id}`))
       .catch((err: unknown) => {
-        setImportError(
-          err instanceof Error ? err.message : "Ce fichier n'a pas pu être importé."
-        );
+        setImportError(err instanceof Error ? err.message : "Ce fichier n'a pas pu être importé.");
       });
   }
 
   async function duplicate(dictation: Dictation) {
     const now = Date.now();
-    await saveDictation({
-      ...dictation,
-      id: nanoid(10),
-      title: `${dictation.title} (copie)`,
-      createdAt: now,
-      updatedAt: now,
-      imageId: undefined,
-    });
+    await saveToLibrary(
+      {
+        ...dictation,
+        id: newDictationId(),
+        title: `${dictation.title} (copie)`,
+        createdAt: now,
+        updatedAt: now,
+        imageId: undefined,
+      },
+      account
+    );
     refresh();
   }
 
   async function confirmDelete() {
     if (!pendingDelete) return;
-    await deleteDictation(pendingDelete.id);
+    await removeFromLibrary(pendingDelete);
     setPendingDelete(null);
     refresh();
+  }
+
+  async function addLocalToAccount() {
+    if (!account) return;
+    setAdding(true);
+    try {
+      await addToAccount(notInAccount, account);
+    } finally {
+      setAdding(false);
+      refresh();
+    }
   }
 
   return (
@@ -192,6 +211,28 @@ export default function Accueil() {
         </div>
       )}
 
+      {!loading && notInAccount.length > 0 && (
+        <div
+          data-testid="add-to-account"
+          className="mb-8 flex flex-col sm:flex-row sm:items-center gap-3 rounded-2xl border border-primary/30 bg-primary-muted p-4"
+        >
+          <CloudUpload className="w-5 h-5 text-primary flex-shrink-0" />
+          <p className="flex-1 text-sm font-bold text-slate-700 dark:text-slate-200">
+            {notInAccount.length > 1
+              ? `${notInAccount.length} dictées de cet appareil ne sont pas dans votre compte DysAdapt.`
+              : '1 dictée de cet appareil n’est pas dans votre compte DysAdapt.'}
+          </p>
+          <button
+            type="button"
+            disabled={adding}
+            onClick={() => void addLocalToAccount()}
+            className="bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-xl text-sm font-bold transition-all active:scale-95 disabled:opacity-50"
+          >
+            {notInAccount.length > 1 ? 'Les ajouter' : 'L’ajouter'}
+          </button>
+        </div>
+      )}
+
       <div className="flex items-center gap-2 mb-5">
         <BookOpenCheck className="w-5 h-5 text-primary flex-shrink-0" />
         <h2 className="text-lg md:text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight">
@@ -200,6 +241,14 @@ export default function Accueil() {
         {!loading && dictations.length > 0 && (
           <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
             {dictations.length} {dictations.length > 1 ? 'dictées' : 'dictée'}
+          </span>
+        )}
+        {!loading && (
+          <span
+            data-testid="storage-indicator"
+            className="ml-auto text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500"
+          >
+            {account ? 'Sauvegardé dans votre compte' : 'Sur cet appareil'}
           </span>
         )}
       </div>

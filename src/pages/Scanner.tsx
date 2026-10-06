@@ -6,6 +6,7 @@ import { AlertTriangle, Check, QrCode } from 'lucide-react';
 import PageShell from '@/components/PageShell';
 import { ChunkCollector, decodeChunks, parseChunk, type ImportedDictation } from '@/lib/share';
 import { saveDictation } from '@/lib/db';
+import { newDictationId } from '@/lib/ids';
 
 type Status = 'idle' | 'scanning' | 'denied' | 'done';
 
@@ -117,7 +118,7 @@ export default function Scanner() {
 
   async function save() {
     if (!imported) return;
-    const id = nanoid(10);
+    const id = newDictationId();
     const now = Date.now();
     await saveDictation({
       id,
