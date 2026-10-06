@@ -18,9 +18,16 @@ These are the product, not implementation details. Do not break them:
 
 1. **Everything runs client-side and offline.** No fetch to a third party, ever. OCR assets,
    fonts and the language model are served from `public/` and precached by the service worker.
+   The one network use is the optional DysAdapt account, on DysAdapt's own origin.
 2. **The pupil never sees the dictation text.** `ModeEleve` renders part numbers only — no
    segment text may reach the DOM. `src/pages/__tests__/ModeEleve.test.tsx` guards this.
-3. **No login, no server.** Persistence is IndexedDB plus localStorage; transfer is a QR code.
+3. **The account is optional.** Without a DysAdapt session nothing changes: IndexedDB plus
+   localStorage, transfer by QR code, and no request at all. With one, `lib/library.ts` also
+   saves dictations in the account (`/api/backend/services/dictations`, through DysAdapt's
+   same-origin proxy — Dictadapt never handles a token) like a DysAdapt document: last save
+   wins, deletion is final, offline changes are sent once back online. The source photo never
+   leaves the device. A dictation can be put in students' DysAdapt lockers; the pupil opens it
+   at `#/eleve/casier/:assignmentId` and their progress is saved in the account.
 
 ## Stack
 
@@ -44,11 +51,15 @@ src/
 │   ├── speech.ts     TTS adapter: Web Speech API, local voices only
 │   ├── share.ts      QR payload: deflate + base64url + multi-code splitting
 │   ├── db.ts         IndexedDB (dictations, blobs, progress)
+│   ├── account.ts    DysAdapt session (who is signed in, offline fallback)
+│   ├── library.ts    Library: device + account (save, delete, mirror, offline queue)
+│   ├── remote.ts     DysAdapt API calls (dictations, students, lockers)
+│   ├── ids.ts        UUID dictation ids
 │   ├── storage.ts    localStorage settings
 │   └── types.ts
 ├── pages/          Accueil · NouvelleDictee · DicteeDetail · ModeEleve · Scanner · Reglages
 ├── components/     Flat, PascalCase, one default export per file (DysAdapt convention)
-├── hooks/          useDictations · useSettings · useTheme
+├── hooks/          useAccount · useDictations · useSettings · useTheme
 └── styles/globals.css   Design tokens, copied from DysAdapt
 ```
 

@@ -19,8 +19,10 @@ Le texte n'est **jamais affiché** à l'élève : c'est une dictée, il écoute 
 
 - **Aucune connexion internet.** OCR, synthèse vocale, polices : tout est embarqué. Une fois
   l'application ouverte une première fois, elle fonctionne en mode avion, définitivement.
-- **Aucun compte, aucun serveur.** Photos, textes et dictées restent sur l'appareil. Rien n'est
-  envoyé nulle part — il n'y a pas de backend.
+- **Compte facultatif.** Sans compte, photos, textes et dictées restent sur l'appareil et rien
+  n'est envoyé nulle part. Connecté à son compte DysAdapt (Dictadapt est servi sur
+  `dysadapt.com/dictee/`), l'enseignant retrouve ses dictées sur tous ses appareils et les met
+  dans le casier de ses élèves, avec leur progression. La photo ne quitte jamais l'appareil.
 - **Aucune IA.** Un texte de dictée imprimé se reconnaît très bien avec Tesseract ; le découpage
   suit les règles de la ponctuation française.
 

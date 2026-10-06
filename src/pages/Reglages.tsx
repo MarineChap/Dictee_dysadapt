@@ -39,8 +39,10 @@ export default function Reglages() {
             <div className="text-sm text-slate-600 dark:text-slate-300 space-y-2">
               <p>
                 <span className="font-bold">Dictadapt</span> fonctionne entièrement sur votre
-                appareil : pas de compte, pas de serveur, pas de connexion. Photos, textes et
-                dictées ne quittent jamais l&apos;appareil.
+                appareil, sans connexion. Sans compte, photos, textes et dictées ne quittent jamais
+                l&apos;appareil. Connecté à votre compte DysAdapt, le texte des dictées et la
+                progression des élèves y sont aussi enregistrés ; la photo reste sur
+                l&apos;appareil.
               </p>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 Effacer les données du navigateur (ou désinstaller l&apos;application) supprime
