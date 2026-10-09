@@ -2,7 +2,6 @@ import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   ArrowUpRight,
-  BookOpenCheck,
   Camera,
   CloudUpload,
   Check,
@@ -21,6 +20,16 @@ import {
 import { nanoid } from 'nanoid';
 import PageShell from '@/components/PageShell';
 import ConfirmDialog from '@/components/ConfirmDialog';
+import {
+  Button,
+  ButtonLink,
+  Card,
+  IconButton,
+  Input,
+  Notice,
+  SectionTitle,
+  buttonClasses,
+} from '@/components/ui';
 import { useAccount } from '@/hooks/useAccount';
 import { useDictations } from '@/hooks/useDictations';
 import { saveDictation } from '@/lib/db';
@@ -165,54 +174,50 @@ export default function Accueil() {
     }
   }
 
+  const ghostIcon =
+    'size-9 inline-flex items-center justify-center rounded-md text-muted hover:text-primary hover:bg-primary-muted transition-colors shrink-0';
+
   return (
     <PageShell
       title="Mes dictées"
       headerRight={
         <>
-          <a
-            href="https://dysadapt.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 pl-3 pr-2.5 py-1.5 rounded-xl text-sm font-bold text-primary bg-primary-muted hover:bg-primary hover:text-white transition-all active:scale-95"
-          >
-            DysAdapt
-            <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
-            <span className="sr-only">(ouvrir dysadapt.com)</span>
-          </a>
-          <Link
-            to="/reglages"
-            aria-label="Réglages"
-            className="p-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-slate-400 transition-colors"
-          >
-            <Settings className="w-5 h-5" />
+          {/* Signed in, the bar is DysAdapt's already */}
+          {!account && (
+            <span className="hidden sm:inline-flex">
+              <a
+                href="https://dysadapt.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={buttonClasses({ variant: 'ghost', size: 'sm' })}
+              >
+                DysAdapt
+                <ArrowUpRight className="size-4" aria-hidden="true" />
+                <span className="sr-only">(ouvrir dysadapt.com)</span>
+              </a>
+            </span>
+          )}
+          <Link to="/reglages" aria-label="Réglages" title="Réglages" className={ghostIcon}>
+            <Settings className="size-5" aria-hidden="true" />
           </Link>
         </>
       }
     >
       <div className="flex flex-col sm:flex-row gap-3 mb-8">
-        <Link
-          to="/nouvelle"
-          className="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-primary/20"
-        >
-          <Camera className="w-5 h-5" />
+        <ButtonLink to="/nouvelle" size="lg" icon={Camera} className="sm:flex-1">
           Nouvelle dictée
-        </Link>
-        <Link
-          to="/scanner"
-          className="flex items-center justify-center gap-2 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-primary hover:text-primary transition-all active:scale-95"
-        >
-          <QrCode className="w-5 h-5" />
+        </ButtonLink>
+        <ButtonLink to="/scanner" size="lg" variant="secondary" icon={QrCode}>
           Recevoir un QR code
-        </Link>
-        <button
-          type="button"
+        </ButtonLink>
+        <Button
+          size="lg"
+          variant="secondary"
+          icon={FileUp}
           onClick={() => fileInputRef.current?.click()}
-          className="flex items-center justify-center gap-2 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-primary hover:text-primary transition-all active:scale-95"
         >
-          <FileUp className="w-5 h-5" />
           Importer un fichier
-        </button>
+        </Button>
         <input
           ref={fileInputRef}
           type="file"
@@ -223,48 +228,45 @@ export default function Accueil() {
       </div>
 
       {importError && (
-        <div className="mb-8 flex items-start gap-3 rounded-2xl border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/30 p-4">
-          <p className="text-sm text-amber-800 dark:text-amber-200">{importError}</p>
-        </div>
+        <Notice tone="warning" live className="mb-8">
+          {importError}
+        </Notice>
       )}
 
       {!loading && notInAccount.length > 0 && (
-        <div
-          data-testid="add-to-account"
-          className="mb-8 flex flex-col sm:flex-row sm:items-center gap-3 rounded-2xl border border-primary/30 bg-primary-muted p-4"
-        >
-          <CloudUpload className="w-5 h-5 text-primary flex-shrink-0" />
-          <p className="flex-1 text-sm font-bold text-slate-700 dark:text-slate-200">
+        <div data-testid="add-to-account" className="mb-8">
+          <Notice
+            tone="primary"
+            actions={
+              <Button
+                size="sm"
+                icon={CloudUpload}
+                disabled={adding}
+                onClick={() => void addLocalToAccount()}
+              >
+                {notInAccount.length > 1 ? 'Les ajouter' : 'L’ajouter'}
+              </Button>
+            }
+          >
             {notInAccount.length > 1
               ? `${notInAccount.length} dictées de cet appareil ne sont pas dans votre compte DysAdapt.`
               : '1 dictée de cet appareil n’est pas dans votre compte DysAdapt.'}
-          </p>
-          <button
-            type="button"
-            disabled={adding}
-            onClick={() => void addLocalToAccount()}
-            className="bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-xl text-sm font-bold transition-all active:scale-95 disabled:opacity-50"
-          >
-            {notInAccount.length > 1 ? 'Les ajouter' : 'L’ajouter'}
-          </button>
+          </Notice>
         </div>
       )}
 
-      <div className="flex items-center gap-2 mb-5">
-        <BookOpenCheck className="w-5 h-5 text-primary flex-shrink-0" />
-        <h2 className="text-lg md:text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight">
+      <div className="flex flex-wrap items-end gap-x-3 gap-y-1 mb-5">
+        <SectionTitle
+          aside={
+            !loading && dictations.length > 0
+              ? `${dictations.length} ${dictations.length > 1 ? 'dictées' : 'dictée'}`
+              : undefined
+          }
+        >
           Bibliothèque
-        </h2>
-        {!loading && dictations.length > 0 && (
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
-            {dictations.length} {dictations.length > 1 ? 'dictées' : 'dictée'}
-          </span>
-        )}
+        </SectionTitle>
         {!loading && (
-          <span
-            data-testid="storage-indicator"
-            className="ml-auto text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500"
-          >
+          <span data-testid="storage-indicator" className="ml-auto text-sm text-muted">
             {account ? 'Sauvegardé dans votre compte' : 'Sur cet appareil'}
           </span>
         )}
@@ -273,54 +275,39 @@ export default function Accueil() {
       {loading && (
         <div className="grid gap-4 sm:grid-cols-2">
           {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className="h-40 rounded-3xl bg-slate-100 dark:bg-slate-800 animate-pulse"
-            />
+            <div key={i} className="h-40 rounded-lg bg-surface-sunken animate-pulse" />
           ))}
         </div>
       )}
 
       {!loading && error && (
-        <div className="rounded-3xl border-2 border-dashed border-red-300 dark:border-red-900 p-8 text-center">
-          <p className="text-sm font-bold text-red-600 dark:text-red-400 mb-4">{error}</p>
-          <button
-            type="button"
-            onClick={() => refresh()}
-            className="bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-lg text-sm font-bold shadow-lg shadow-primary-muted transition-all active:scale-95"
-          >
-            Réessayer
-          </button>
-        </div>
+        <Notice tone="danger" live actions={<Button onClick={() => refresh()}>Réessayer</Button>}>
+          {error}
+        </Notice>
       )}
 
       {!loading && !error && dictations.length === 0 && (
-        <div className="rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-700 p-10 text-center">
-          <div className="w-14 h-14 rounded-full bg-primary-muted flex items-center justify-center mx-auto mb-4">
-            <Camera className="w-7 h-7 text-primary" />
-          </div>
-          <p className="font-black text-slate-800 dark:text-slate-100 mb-1">
-            Aucune dictée pour l&apos;instant
-          </p>
-          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+        <Card padding="lg" className="flex flex-col items-center gap-3 text-center">
+          <span className="size-14 rounded-full bg-primary-muted flex items-center justify-center">
+            <Camera className="size-7 text-primary" aria-hidden="true" />
+          </span>
+          <p className="text-lg font-bold text-foreground">Aucune dictée pour l&apos;instant</p>
+          <p className="text-muted max-w-sm">
             Prenez l&apos;exercice en photo : le texte est reconnu, vous le vérifiez, puis
             l&apos;élève écoute la dictée partie par partie.
           </p>
-        </div>
+        </Card>
       )}
 
       {!loading && !error && dictations.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2">
           {dictations.map((dictation) => (
-            <div
-              key={dictation.id}
-              className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 hover:shadow-lg hover:border-primary-hover transition-all group flex flex-col"
-            >
+            <Card key={dictation.id} interactive className="flex flex-col gap-5">
               <div className="flex items-start gap-2">
                 {renamingId === dictation.id ? (
                   <>
                     <div className="flex-1 min-w-0">
-                      <input
+                      <Input
                         type="text"
                         value={renameValue}
                         autoFocus
@@ -335,30 +322,24 @@ export default function Accueil() {
                           }
                         }}
                         aria-label={`Renommer ${dictation.title}`}
-                        className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 focus:border-primary bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-black tracking-tight transition-all outline-none"
+                        className="font-bold"
                       />
-                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mt-1">
+                      <p className="text-sm text-muted mt-1">
                         {dictation.segments.length} parties · {formatDate(dictation.createdAt)}
                       </p>
                     </div>
-                    <button
-                      type="button"
+                    <IconButton
+                      icon={Check}
+                      label="Valider le titre"
                       onMouseDown={(event) => event.preventDefault()}
                       onClick={() => void commitRename(dictation)}
-                      aria-label="Valider le titre"
-                      className="p-2.5 rounded-xl text-primary hover:bg-primary-muted transition-colors flex-shrink-0"
-                    >
-                      <Check className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
+                    />
+                    <IconButton
+                      icon={X}
+                      label="Annuler le renommage"
                       onMouseDown={(event) => event.preventDefault()}
                       onClick={cancelRename}
-                      aria-label="Annuler le renommage"
-                      className="p-2.5 -mr-1 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200 transition-colors flex-shrink-0"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
+                    />
                   </>
                 ) : (
                   <>
@@ -366,84 +347,79 @@ export default function Accueil() {
                         imported dictation has none, so it only plays for the pupil. */}
                     <Link
                       to={dictation.imported ? `/eleve/${dictation.id}` : `/dictee/${dictation.id}`}
-                      className="flex-1 min-w-0"
+                      className="flex-1 min-w-0 group rounded-md"
                     >
-                      <h3 className="flex items-center gap-1.5 font-black text-slate-900 dark:text-white tracking-tight">
+                      <h3 className="flex items-center gap-1.5 text-lg font-bold text-foreground group-hover:text-primary group-hover:underline underline-offset-4">
                         {dictation.imported && (
                           <Import
-                            className="w-4 h-4 flex-shrink-0 text-primary"
+                            className="size-4 shrink-0 text-primary"
                             aria-label="Dictée importée"
                           />
                         )}
                         <span className="truncate">{dictation.title}</span>
                       </h3>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mt-1">
+                      <p className="text-sm text-muted mt-1">
                         {dictation.segments.length} parties · {formatDate(dictation.createdAt)}
                       </p>
                     </Link>
-                    <button
-                      type="button"
+                    <IconButton
+                      icon={Pencil}
+                      size="sm"
+                      label={`Renommer ${dictation.title}`}
                       onClick={() => startRename(dictation)}
-                      aria-label={`Renommer ${dictation.title}`}
-                      className="p-2.5 -mr-1 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200 transition-colors flex-shrink-0"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </button>
+                    />
                   </>
                 )}
               </div>
 
-              <div className="flex items-center gap-2 mt-5">
+              <div className="mt-auto flex flex-wrap items-center gap-2">
                 {/* Signed in, the pupil gets it from their locker; a received copy has only this. */}
                 {(!account || dictation.imported) && (
-                  <button
-                    type="button"
+                  <Button
+                    size="sm"
+                    icon={Play}
                     onClick={() => navigate(`/eleve/${dictation.id}`)}
-                    className="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-primary-muted"
+                    className="flex-1"
                   >
-                    <Play className="w-4 h-4" />
                     Faire la dictée
-                  </button>
+                  </Button>
                 )}
                 {!dictation.imported && (
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/dictee/${dictation.id}`)}
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    icon={SquarePen}
                     aria-label={`Modifier la dictée ${dictation.title}`}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-primary hover:text-primary transition-all active:scale-95"
+                    onClick={() => navigate(`/dictee/${dictation.id}`)}
                   >
-                    <SquarePen className="w-4 h-4" />
                     Modifier
-                  </button>
+                  </Button>
                 )}
-                <button
-                  type="button"
-                  onClick={() => void duplicate(dictation)}
-                  aria-label={`Dupliquer ${dictation.title}`}
-                  className="p-2.5 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-                >
-                  <Copy className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => askDelete(dictation)}
-                  aria-label={`Supprimer ${dictation.title}`}
-                  className="p-2.5 rounded-xl text-slate-400 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <span className="ml-auto flex items-center gap-1">
+                  <IconButton
+                    icon={Copy}
+                    size="sm"
+                    label={`Dupliquer ${dictation.title}`}
+                    onClick={() => void duplicate(dictation)}
+                  />
+                  <IconButton
+                    icon={Trash2}
+                    size="sm"
+                    label={`Supprimer ${dictation.title}`}
+                    onClick={() => askDelete(dictation)}
+                    className="hover:text-danger-700 dark:hover:text-danger-300"
+                  />
+                </span>
               </div>
-            </div>
+            </Card>
           ))}
 
           <Link
             to="/nouvelle"
-            className="rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-700 p-6 flex flex-col items-center justify-center gap-2 text-slate-400 dark:text-slate-500 hover:border-primary hover:text-primary transition-all min-h-40"
+            className="rounded-lg border-2 border-dashed border-border-strong p-6 flex flex-col items-center justify-center gap-2 text-muted hover:border-primary hover:text-primary transition-colors min-h-40"
           >
-            <Plus className="w-7 h-7" />
-            <span className="text-[10px] font-black uppercase tracking-widest">
-              Ajouter une dictée
-            </span>
+            <Plus className="size-7" aria-hidden="true" />
+            <span className="font-bold">Ajouter une dictée</span>
           </Link>
         </div>
       )}

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Check, RotateCcw, Volume2 } from 'lucide-react';
 import DictadaptLogo from '@/components/DictadaptLogo';
+import { Button, IconButton, Notice, cx } from '@/components/ui';
 import { clearProgress, getDictation, getProgress, saveProgress } from '@/lib/db';
 import { lockerUrl } from '@/lib/account';
 import { pupilDictation, savePupilProgress } from '@/lib/remote';
@@ -168,18 +169,14 @@ export default function ModeEleve() {
   if (notFound) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 p-6 text-center">
-        <p className="font-black text-slate-900 dark:text-white">
+        <p className="text-lg font-bold text-foreground">
           {assignmentId
             ? "Cette dictée n'est plus dans ton casier."
             : "Cette dictée n'existe plus."}
         </p>
-        <button
-          type="button"
-          onClick={() => (assignmentId ? window.history.back() : navigate('/'))}
-          className="bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-lg text-sm font-bold shadow-lg shadow-primary-muted transition-all active:scale-95"
-        >
+        <Button onClick={() => (assignmentId ? window.history.back() : navigate('/'))}>
           Retour
-        </button>
+        </Button>
       </div>
     );
   }
@@ -187,7 +184,7 @@ export default function ModeEleve() {
   if (!dictation) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-32 h-8 rounded-full bg-slate-100 dark:bg-slate-800 animate-pulse" />
+        <div className="w-32 h-8 rounded-full bg-surface-sunken animate-pulse" />
       </div>
     );
   }
@@ -197,34 +194,22 @@ export default function ModeEleve() {
   const finished = done === total && total > 0;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col transition-colors duration-300">
-      <header className="fixed top-0 w-full z-40 bg-background/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 safe-top">
+    <div className="min-h-screen bg-background flex flex-col">
+      <header className="fixed top-0 w-full z-40 bg-surface border-b border-border safe-top">
         <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
           <DictadaptLogo markSize={28} showWordmark={false} />
-          <p className="flex-1 min-w-0 text-center font-black text-slate-900 dark:text-white tracking-tight truncate">
+          <h1 className="flex-1 min-w-0 text-center text-lg font-bold text-foreground truncate">
             {dictation.title}
-          </p>
-          <button
-            type="button"
-            onClick={leave}
-            aria-label="Quitter la dictée"
-            className="p-2 rounded-xl text-slate-400 dark:text-slate-500 hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
+          </h1>
+          <IconButton icon={ArrowLeft} label="Quitter la dictée" onClick={leave} />
         </div>
       </header>
 
       <main className="flex-1 w-full max-w-3xl mx-auto px-4 pt-24 pb-40">
         {finished && (
-          <div className="animate-success mb-6 flex items-center gap-3 rounded-3xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/30 p-5">
-            <span className="w-11 h-11 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
-              <Check className="w-6 h-6 text-white" />
-            </span>
-            <p className="font-black text-emerald-800 dark:text-emerald-200 tracking-tight">
-              Bravo, tu as écouté toute la dictée !
-            </p>
-          </div>
+          <Notice tone="success" live className="animate-success mb-6 text-lg font-bold">
+            Bravo, tu as écouté toute la dictée !
+          </Notice>
         )}
 
         <ol className="grid gap-4 sm:grid-cols-2" data-testid="part-buttons">
@@ -234,49 +219,44 @@ export default function ModeEleve() {
 
             return (
               <li key={segment.id}>
+                {/* eslint-disable-next-line design-system/prefer-ui-button -- a pupil's giant part tile, not a button of the interface */}
                 <button
                   type="button"
                   onClick={() => play(segment.id, segment.text)}
                   aria-label={`Écouter la partie ${index + 1}${heard ? ', déjà écoutée' : ''}`}
-                  className={`w-full min-h-28 rounded-3xl border-2 px-5 py-6 flex items-center gap-4 text-left transition-all active:scale-[0.97] ${
-                    speaking
-                      ? 'bg-primary border-primary text-white shadow-lg shadow-primary-muted attention-pulse'
-                      : heard
-                        ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-400 dark:border-emerald-700 text-emerald-800 dark:text-emerald-200'
-                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white hover:border-primary'
-                  }`}
+                  className={cx(
+                    'w-full min-h-28 rounded-lg border-2 px-5 py-6 flex items-center gap-4 text-left transition-colors',
+                    speaking && 'bg-primary border-primary text-white attention-pulse',
+                    !speaking &&
+                      heard &&
+                      'bg-success-50 border-success-700 text-success-800 dark:bg-success-950/50 dark:border-success-300 dark:text-success-200',
+                    !speaking &&
+                      !heard &&
+                      'bg-surface border-border-strong text-foreground hover:border-primary'
+                  )}
                 >
                   <span
                     aria-hidden="true"
-                    className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 transition-colors ${
-                      speaking
-                        ? 'bg-white/20 text-white'
-                        : heard
-                          ? 'bg-emerald-500 text-white'
-                          : 'bg-primary-muted text-primary'
-                    }`}
+                    className={cx(
+                      'size-14 rounded-full flex items-center justify-center shrink-0',
+                      speaking && 'bg-surface text-primary',
+                      !speaking &&
+                        heard &&
+                        'bg-success-700 text-white dark:bg-success-300 dark:text-success-950',
+                      !speaking && !heard && 'bg-primary-muted text-primary'
+                    )}
                   >
                     {heard && !speaking ? (
-                      <Check className="w-7 h-7" />
+                      <Check className="size-7" />
                     ) : (
-                      <Volume2 className="w-7 h-7" />
+                      <Volume2 className="size-7" />
                     )}
                   </span>
 
                   <span className="min-w-0">
-                    <span className="block text-2xl font-black tracking-tight">
-                      Partie {index + 1}
-                    </span>
+                    <span className="block text-2xl font-bold">Partie {index + 1}</span>
                     {dictation.showWordCount && (
-                      <span
-                        className={`block text-xs font-bold ${
-                          speaking
-                            ? 'text-white/80'
-                            : heard
-                              ? 'text-emerald-600 dark:text-emerald-400'
-                              : 'text-slate-400 dark:text-slate-500'
-                        }`}
-                      >
+                      <span className="block text-sm">
                         {countWords(segment.text)} mot{countWords(segment.text) > 1 ? 's' : ''}
                       </span>
                     )}
@@ -288,14 +268,14 @@ export default function ModeEleve() {
         </ol>
       </main>
 
-      <div className="thumb-zone-nav safe-bottom">
+      <div className="fixed bottom-0 inset-x-0 z-30 bg-surface border-t border-border px-4 py-3 safe-bottom">
         <div className="max-w-3xl mx-auto flex items-center gap-3">
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1.5">
+            <p className="text-sm font-bold text-foreground mb-1.5">
               {done} sur {total} écoutée{done > 1 ? 's' : ''}
             </p>
             <div
-              className="h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden"
+              className="h-2 rounded-full bg-surface-sunken overflow-hidden"
               role="progressbar"
               aria-valuenow={done}
               aria-valuemin={0}
@@ -310,25 +290,20 @@ export default function ModeEleve() {
           </div>
 
           {speakingId !== null && (
-            <button
-              type="button"
-              onClick={stop}
-              className="px-5 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 transition-all active:scale-95"
-            >
+            <Button variant="secondary" onClick={stop}>
               Stop
-            </button>
+            </Button>
           )}
 
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            icon={RotateCcw}
             onClick={() => void restart()}
             // The label is hidden on narrow screens, so name the button explicitly.
             aria-label="Recommencer la dictée"
-            className="flex items-center gap-2 px-5 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-primary hover:text-primary transition-all active:scale-95"
           >
-            <RotateCcw className="w-4 h-4" />
             <span className="hidden sm:inline">Recommencer</span>
-          </button>
+          </Button>
         </div>
       </div>
     </div>

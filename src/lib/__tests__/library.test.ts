@@ -201,7 +201,9 @@ describe('fetchAccount', () => {
   });
 
   it('treats a session that could not be refreshed as signed out', async () => {
-    vi.stubGlobal('fetch', () => json({ user: { id: 'user-1' }, error: 'RefreshAccessTokenError' }));
+    vi.stubGlobal('fetch', () =>
+      json({ user: { id: 'user-1' }, error: 'RefreshAccessTokenError' })
+    );
     expect(await fetchAccount()).toBeNull();
   });
 

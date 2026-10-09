@@ -29,7 +29,9 @@ describe('spellPunctuation', () => {
   });
 
   it('reads out quotes and parentheses', () => {
-    expect(spellPunctuation('«Bonjour»')).toBe('ouvrez les guillemets Bonjour fermez les guillemets');
+    expect(spellPunctuation('«Bonjour»')).toBe(
+      'ouvrez les guillemets Bonjour fermez les guillemets'
+    );
     expect(spellPunctuation('(oui)')).toBe('ouvrez la parenthèse oui fermez la parenthèse');
   });
 

@@ -14,6 +14,8 @@ import { reconcileSegmentIds, sameWords } from '@/lib/segment';
 import { FILE_MIME, dictationFileName, encodeDictationFile } from '@/lib/file';
 import { cancelSpeech, speak } from '@/lib/speech';
 import type { Dictation } from '@/lib/types';
+import ActionBar from '@/components/ActionBar';
+import { Button, Card, Field, Input, SectionTitle } from '@/components/ui';
 
 export default function DicteeDetail() {
   const { id } = useParams<{ id: string }>();
@@ -97,9 +99,7 @@ export default function DicteeDetail() {
   if (notFound) {
     return (
       <PageShell title="Dictée introuvable" backTo="/" backLabel="Mes dictées">
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          Cette dictée n&apos;existe plus sur cet appareil.
-        </p>
+        <p className="text-muted">Cette dictée n&apos;existe plus sur cet appareil.</p>
       </PageShell>
     );
   }
@@ -107,7 +107,7 @@ export default function DicteeDetail() {
   if (!dictation) {
     return (
       <PageShell title="Dictée" backTo="/" backLabel="Mes dictées">
-        <div className="h-40 rounded-3xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
+        <div className="h-40 rounded-lg bg-surface-sunken animate-pulse" />
       </PageShell>
     );
   }
@@ -116,63 +116,51 @@ export default function DicteeDetail() {
     <PageShell title={dictation.title} backTo="/" backLabel="Mes dictées">
       {sharesByHand && (
         <div className="flex flex-col sm:flex-row gap-3 mb-8">
-          <button
-            type="button"
+          <Button
+            size="lg"
+            icon={Play}
             onClick={() => navigate(`/eleve/${dictation.id}`)}
-            className="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-primary/20"
+            className="sm:flex-1"
           >
-            <Play className="w-5 h-5" />
             Donner à l&apos;élève
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowQr((current) => !current)}
+          </Button>
+          <Button
+            size="lg"
+            variant="secondary"
+            icon={QrCode}
             aria-expanded={showQr}
-            className="flex items-center justify-center gap-2 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-primary hover:text-primary transition-all active:scale-95"
+            onClick={() => setShowQr((current) => !current)}
           >
-            <QrCode className="w-5 h-5" />
             {showQr ? 'Masquer le QR' : 'Partager par QR'}
-          </button>
-          <button
-            type="button"
-            onClick={exportFile}
-            className="flex items-center justify-center gap-2 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-primary hover:text-primary transition-all active:scale-95"
-          >
-            <FileDown className="w-5 h-5" />
+          </Button>
+          <Button size="lg" variant="secondary" icon={FileDown} onClick={exportFile}>
             Exporter (fichier)
-          </button>
+          </Button>
         </div>
       )}
 
       {account && dictation.ownerId === account.id && <LockerPanel dictationId={dictation.id} />}
 
       {sharesByHand && showQr && (
-        <section className="mb-8 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6">
+        <Card as="section" className="mb-8">
           <QrShare dictation={dictation} />
-        </section>
+        </Card>
       )}
 
-      <section className="mb-8">
-        <label
-          htmlFor="title"
-          className="block text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3"
-        >
-          Titre
-        </label>
-        <input
-          id="title"
-          type="text"
-          value={dictation.title}
-          onChange={(event) => patch({ title: event.target.value })}
-          placeholder="Dictée du lundi"
-          className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 focus:border-primary bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 transition-all outline-none"
-        />
-      </section>
+      <Field label="Titre" id="title" className="mb-10">
+        {(control) => (
+          <Input
+            {...control}
+            type="text"
+            value={dictation.title}
+            onChange={(event) => patch({ title: event.target.value })}
+            placeholder="Dictée du lundi"
+          />
+        )}
+      </Field>
 
-      <section className="mb-8">
-        <h2 className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3">
-          Découpage — {dictation.segments.length} parties
-        </h2>
+      <section className="mb-10 flex flex-col gap-3">
+        <SectionTitle aside={`${dictation.segments.length} parties`}>Découpage</SectionTitle>
         <SegmentEditor
           segments={dictation.segments.map((segment) => segment.text)}
           onChange={(texts) => {
@@ -194,7 +182,7 @@ export default function DicteeDetail() {
         />
       </section>
 
-      <section className="mb-8">
+      <section className={dirty || saved ? 'mb-24' : 'mb-8'}>
         <SpeechSettingsFields
           value={dictation.speech}
           onChange={(speech) => patch({ speech })}
@@ -209,25 +197,18 @@ export default function DicteeDetail() {
       </section>
 
       {(dirty || saved) && (
-        <div className="thumb-zone-nav safe-bottom">
-          <div className="max-w-5xl mx-auto flex items-center justify-end gap-3">
-            {saved && !dirty && (
-              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                Modifications enregistrées.
-              </span>
-            )}
-            {dirty && (
-              <button
-                type="button"
-                onClick={() => void save()}
-                className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-primary-muted"
-              >
-                <Save className="w-4 h-4" />
-                Enregistrer
-              </button>
-            )}
-          </div>
-        </div>
+        <ActionBar>
+          {saved && !dirty && (
+            <span role="status" className="font-bold text-success-700 dark:text-success-300">
+              Modifications enregistrées.
+            </span>
+          )}
+          {dirty && (
+            <Button icon={Save} onClick={() => void save()}>
+              Enregistrer
+            </Button>
+          )}
+        </ActionBar>
       )}
     </PageShell>
   );

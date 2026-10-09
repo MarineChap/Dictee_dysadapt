@@ -1,60 +1,47 @@
 @import 'tailwindcss';
 
-/* ────────────────────────────────────────────────────────────────────────────
-   Dictadapt reuses the DysAdapt design system verbatim (tokens, dark palette,
-   WCAG override, animation utilities) so the two tools feel like one product.
-   Source: dysadapt/frontend/src/app/globals.css
+/* ════════════════════════════════════════════════════════════════════════
+   The DysAdapt design system, so the two tools are one product. Tokens,
+   theme, base layer and Seyès ruling are copied verbatim from
+   dysadapt/frontend/src/app/globals.css (keep them in sync); below them,
+   only what Dictadapt needs on its own (local fonts, reading text, safe
+   areas, scanner sweep). Rules: dysadapt/docs/frontend-design-system.md.
 
-   Every font is self-hosted: the app must work with no network at all, so the
-   OpenDyslexic CDN URL used by DysAdapt is replaced by a local file here.
-   ──────────────────────────────────────────────────────────────────────────── */
+   Every font is self-hosted: the app must work with no network at all.
+   ════════════════════════════════════════════════════════════════════════ */
 
-/* UI font — Geist, same as DysAdapt (loaded there through next/font) */
+/* Interface font — Luciole (CC BY 4.0, luciole-vision.com), as in DysAdapt */
 @font-face {
-  font-family: 'Geist';
-  src: url('/fonts/Geist-400.woff2') format('woff2');
+  font-family: 'Luciole';
+  src: url('/fonts/Luciole-Regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'Geist';
-  src: url('/fonts/Geist-500.woff2') format('woff2');
-  font-weight: 500;
-  font-style: normal;
+  font-family: 'Luciole';
+  src: url('/fonts/Luciole-Italic.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
   font-display: swap;
 }
 @font-face {
-  font-family: 'Geist';
-  src: url('/fonts/Geist-600.woff2') format('woff2');
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Geist';
-  src: url('/fonts/Geist-700.woff2') format('woff2');
+  font-family: 'Luciole';
+  src: url('/fonts/Luciole-Bold.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'Geist';
-  src: url('/fonts/Geist-800.woff2') format('woff2');
-  font-weight: 800;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Geist';
-  src: url('/fonts/Geist-900.woff2') format('woff2');
-  font-weight: 900;
-  font-style: normal;
+  font-family: 'Luciole';
+  src: url('/fonts/Luciole-BoldItalic.woff2') format('woff2');
+  font-weight: 700;
+  font-style: italic;
   font-display: swap;
 }
 
-/* Accessibility fonts — the four DysAdapt profiles. v1 uses Andika everywhere;
-   the other three are bundled so the v2 font picker needs no new assets. */
+/* Reading font — what a struggling reader decodes (.reading-text). v1 uses
+   Andika; OpenDyslexic and Marelle are bundled for the v2 font picker. */
 @font-face {
   font-family: 'Andika';
   src: url('/fonts/Andika-Regular.woff2') format('woff2');
@@ -90,70 +77,181 @@
   font-style: normal;
   font-display: swap;
 }
-@font-face {
-  font-family: 'Luciole';
-  src: url('/fonts/Luciole-Regular.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
 
-/* Tailwind v4 defaults dark mode to a media query — switch it to the class
-   strategy so the theme toggle works. */
+/* Tailwind v4 defaults dark mode to a media query — class strategy instead,
+   so the theme toggle works. */
 @variant dark (&:where(.dark, .dark *));
 
+/* ── Copied from DysAdapt ─────────────────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  /* Slate-950 */
-  --foreground: #0f172a;
-  /* Slate-500 */
-  --muted: #64748b;
-  /* Slate-50 */
-  --surface: #f8fafc;
-  /* Indigo-600 */
-  --primary: #4f46e5;
-  /* Indigo-700 */
-  --primary-hover: #4338ca;
-  /* Indigo-50 */
-  --primary-muted: #eef2ff;
-  /* Sky-500 */
-  --accent: #0ea5e9;
+  /* Barely warm paper ground, white cards, ink-blue primary, blue-pen underline. */
+  --background: #f7f6f3;
+  --surface: #ffffff;
+  --surface-sunken: #efeeea;
+  /* A panel inside a card, a hovered row */
+  --foreground: #22201c;
+  /* 15.1:1 on background, 16.1:1 on surface */
+  --muted: #5f5a50;
+  /* 6.3:1 on background, 6.9:1 on surface */
+  --primary: #1e3a8a;
+  /* Ink — text, links, icons: 9.2:1 on background, 10.4:1 on surface */
+  --primary-solid: #1e3a8a;
+  /* Fill under white text: 10.4:1 */
+  --primary-hover: #172f73;
+  /* White text 12.4:1 */
+  --primary-muted: #eef2fc;
+  /* Tinted panel; primary text on it 9.2:1 */
+  --underline: #4170dd;
+  /* Blue-pen underline under page titles (decorative): 4.6:1 on surface */
+  --border: #e4e2dc;
+  /* Decorative card edge — never the only edge of a control */
+  --border-strong: #8a8274;
+  /* Field / drop-zone edge (WCAG 1.4.11): 3.8:1 on surface, 3.5:1 on background */
+  --accent: #0284c7;
+  /* Kept for the documents' drop zones (3:1 on white) */
+  --seyes-main: #9fb3e3;
+  --seyes-fine: #e3e9f7;
+  --seyes-margin: #e7a3a3;
+  /* LireCouleur syllables (public pages' signature): 5.4:1 / 5.0:1 on background */
+  --syllable-1: #2159d6;
+  --syllable-2: #c42b2b;
+  /* Categorical chart series (admin), validated palette slots 1–4 */
+  --chart-1: #2a78d6;
+  --chart-2: #eb6834;
+  --chart-3: #1baf7a;
+  --chart-4: #eda100;
   color-scheme: light;
-
-  /* Reading typography — v1 pins these to the most comfortable DysAdapt
-     profile. The v2 accessibility panel will rewrite them on <html>. */
-  --reading-font: 'Andika';
-  --reading-size: 20px;
-  --reading-line-height: 1.8;
-  --reading-letter-spacing: 0.05em;
 }
 
 .dark {
-  /* Soft Amethyst (Gentle & Elegant) */
-  --background: #171717;
-  /* Neutral-900 */
-  --surface: #262626;
-  /* Neutral-800 */
-
-  /* Off-white text for high readability */
-  --foreground: #f5f5f5;
-  /* Neutral-100 */
-
-  /* Muted text for hierarchy */
-  --muted: #a3a3a3;
-  /* Neutral-400 */
-
-  /* Soft Amethyst Primary — purple-500 gives 4.53:1 on dark bg (WCAG AA) */
-  --primary: #a855f7;
-  /* Purple-500 */
-  --primary-hover: #9333ea;
-  /* Purple-600 — darker on hover keeps white button text at 5.38:1 */
-  --primary-muted: rgba(168, 85, 247, 0.2);
-  /* Purple-500 with low opacity */
-  --accent: #f472b6;
-  /* Pink-400 */
-
+  /* Near-neutral greys: a warm tint on a dark ground reads khaki. */
+  --background: #181817;
+  --surface: #212120;
+  --surface-sunken: #2a2a28;
+  --foreground: #f1ede4;
+  /* 15.2:1 on background, 13.8:1 on surface */
+  --muted: #b3ab9c;
+  /* 7.8:1 on background, 7.1:1 on surface */
+  --primary: #9db4f0;
+  /* Text, icons: 8.7:1 on background, 7.8:1 on surface */
+  --primary-solid: #2f4fb3;
+  /* Fill under white text: 7.3:1 — --primary is far too light for that */
+  --primary-hover: #3b5cc4;
+  /* White text 6.0:1 */
+  --primary-muted: rgba(157, 180, 240, 0.14);
+  --underline: #6890e6;
+  /* 5.2:1 on surface */
+  --border: #363634;
+  --border-strong: #8a8274;
+  /* 4.2:1 on surface */
+  --accent: #38bdf8;
+  --seyes-main: #3a4466;
+  --seyes-fine: #2b2e3a;
+  --seyes-margin: #7a4040;
+  --syllable-1: #60a5fa;
+  --syllable-2: #f87171;
+  --chart-1: #3987e5;
+  --chart-2: #d95926;
+  --chart-3: #199e70;
+  --chart-4: #c98500;
   color-scheme: dark;
+}
+
+/* The theme is closed: Tailwind's default palette, radii, shadows, extreme
+   weights and letter-spacings are removed, so an off-system class generates
+   no CSS at all (and the lint rule design-system/no-off-system-classes
+   flags it before that). */
+@theme {
+  --color-*: initial;
+  --radius-*: initial;
+  --shadow-*: initial;
+  --inset-shadow-*: initial;
+  --drop-shadow-*: initial;
+  --tracking-*: initial;
+  --font-weight-black: initial;
+  --font-weight-extrabold: initial;
+  --font-weight-thin: initial;
+  --font-weight-extralight: initial;
+
+  --color-white: #ffffff;
+  --color-black: #000000;
+
+  /* Neutrals, barely warm (a warm tint reads beige in light, khaki in dark).
+     Steps match slate's luminance, so contrasts are those of
+     the slate pairs they replaced, except 400 (darker: 3.1:1 on white, 5.0:1
+     on 900) and 500 (4.6:1 on 50). */
+  --color-neutral-50: #f7f6f3;
+  --color-neutral-100: #efeeea;
+  --color-neutral-200: #e4e2dc;
+  --color-neutral-300: #cfc8b8;
+  --color-neutral-400: #9a9283;
+  --color-neutral-500: #726c60;
+  --color-neutral-600: #555350;
+  --color-neutral-700: #43423f;
+  --color-neutral-800: #2a2a28;
+  --color-neutral-900: #212120;
+  --color-neutral-950: #181817;
+
+  /* Ink blue. Steps match indigo's luminance (same contrasts); 800 ≈ primary. */
+  --color-brand-50: #eef2fc;
+  --color-brand-100: #dfe8f9;
+  --color-brand-200: #c3d4f5;
+  --color-brand-300: #9bb7ef;
+  --color-brand-400: #6890e6;
+  --color-brand-500: #4170dd;
+  --color-brand-600: #2455cf;
+  --color-brand-700: #1c47b4;
+  --color-brand-800: #1e3a8a;
+  --color-brand-900: #1d3672;
+  --color-brand-950: #112042;
+
+  /* Status colours: Tailwind's red / emerald / amber, under their role. */
+  --color-danger-50: oklch(97.1% 0.013 17.38);
+  --color-danger-100: oklch(93.6% 0.032 17.717);
+  --color-danger-200: oklch(88.5% 0.062 18.334);
+  --color-danger-300: oklch(80.8% 0.114 19.571);
+  --color-danger-400: oklch(70.4% 0.191 22.216);
+  --color-danger-500: oklch(63.7% 0.237 25.331);
+  --color-danger-600: oklch(57.7% 0.245 27.325);
+  --color-danger-700: oklch(50.5% 0.213 27.518);
+  --color-danger-800: oklch(44.4% 0.177 26.899);
+  --color-danger-900: oklch(39.6% 0.141 25.723);
+  --color-danger-950: oklch(25.8% 0.092 26.042);
+
+  --color-success-50: oklch(97.9% 0.021 166.113);
+  --color-success-100: oklch(95% 0.052 163.051);
+  --color-success-200: oklch(90.5% 0.093 164.15);
+  --color-success-300: oklch(84.5% 0.143 164.978);
+  --color-success-400: oklch(76.5% 0.177 163.223);
+  --color-success-500: oklch(69.6% 0.17 162.48);
+  --color-success-600: oklch(59.6% 0.145 163.225);
+  --color-success-700: oklch(50.8% 0.118 165.612);
+  --color-success-800: oklch(43.2% 0.095 166.913);
+  --color-success-900: oklch(37.8% 0.077 168.94);
+  --color-success-950: oklch(26.2% 0.051 172.552);
+
+  --color-warning-50: oklch(98.7% 0.022 95.277);
+  --color-warning-100: oklch(96.2% 0.059 95.617);
+  --color-warning-200: oklch(92.4% 0.12 95.746);
+  --color-warning-300: oklch(87.9% 0.169 91.605);
+  --color-warning-400: oklch(82.8% 0.189 84.429);
+  --color-warning-500: oklch(76.9% 0.188 70.08);
+  --color-warning-600: oklch(66.6% 0.179 58.318);
+  --color-warning-700: oklch(55.5% 0.163 48.998);
+  --color-warning-800: oklch(47.3% 0.137 46.201);
+  --color-warning-900: oklch(41.4% 0.112 45.904);
+  --color-warning-950: oklch(27.9% 0.077 45.635);
+
+  /* Radii: 4 px (chips), 8 px (buttons, fields), 10 px (cards), full (pills). */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.625rem;
+
+  /* One shadow, for what floats over the page (menus, dialogs, toasts).
+     Cards sit flat with a border. */
+  --shadow-overlay: 0 8px 24px -6px rgb(34 32 28 / 0.18), 0 2px 6px -2px rgb(34 32 28 / 0.1);
+
+  --tracking-normal: 0em;
 }
 
 @theme inline {
@@ -161,46 +259,154 @@
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-surface: var(--surface);
+  --color-surface-sunken: var(--surface-sunken);
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
+  --color-primary-solid: var(--primary-solid);
   --color-primary-muted: var(--primary-muted);
+  --color-underline: var(--underline);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-accent: var(--accent);
-  --font-sans: 'Geist';
+  --color-syllable-1: var(--syllable-1);
+  --color-syllable-2: var(--syllable-2);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --font-sans: 'Luciole', ui-sans-serif, system-ui, sans-serif;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-sans);
   transition:
     background-color 0.3s ease,
     color 0.3s ease;
-  /* Children tap a lot and fast — kill the 300 ms delay and the blue flash. */
+}
+
+/* Keyboard focus is always visible. In the base layer, so a component's own
+   focus style (focus:ring-*, outline-none) still takes precedence. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+  /* Tailwind's default placeholder is the text colour at 50 % (~3:1): a hint
+     the reader needs deserves the muted text colour (4.5:1). */
+  ::placeholder {
+    color: var(--muted);
+    opacity: 1;
+  }
+  /* A focus target reached by script (the skip link's <main>), not a control. */
+  [tabindex='-1']:focus-visible {
+    outline: none;
+  }
+  /* Native checkboxes, radios and ranges take the ink. */
+  input[type='checkbox'],
+  input[type='radio'],
+  input[type='range'],
+  progress {
+    accent-color: var(--primary);
+  }
+  /* Tailwind v4 borders default to currentColor; a bare `border` is a card edge. */
+  *,
+  ::after,
+  ::before {
+    border-color: var(--border);
+  }
+}
+
+/* A visitor who asked their system for less motion gets none: entrance
+   animations, pulses, hover zooms and smooth scrolling stop. Loading spinners
+   keep turning — frozen, they would read as a hung page. */
+@media (prefers-reduced-motion: reduce) {
+  *:not(.animate-spin),
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Seyès ruling (French school paper): a main line every 32 px, three fine
+   lines between, a red margin. Only behind the drop zone (see SeyesZone). */
+@utility bg-seyes {
+  background-color: var(--surface);
+  background-image:
+    linear-gradient(
+      to right,
+      transparent 17px,
+      var(--seyes-margin) 17px,
+      var(--seyes-margin) 18px,
+      transparent 18px
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 31px,
+      var(--seyes-main) 31px,
+      var(--seyes-main) 32px
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 7px,
+      var(--seyes-fine) 7px,
+      var(--seyes-fine) 8px
+    );
+}
+
+/* ── WCAG AA: dark-mode fills ─────────────────────────────────────────────
+   --primary is calibrated for text/icons on dark surfaces and far too light
+   under white text. Every bg-primary fill in dark mode uses --primary-solid
+   instead (white text 7.3:1), so components need no dark: variant for it.
+   ─────────────────────────────────────────────────────────────────────────── */
+:where(.dark, .dark *) .bg-primary,
+:where(.dark, .dark *) .hover\:bg-primary:hover,
+:where(.dark, .dark *) .group:hover .group-hover\:bg-primary {
+  background-color: var(--primary-solid);
+}
+
+/* A sentence on a Seyès main line: the baseline sits on the line (Luciole's
+   descender is trimmed). Fallback offset measured for 15 px Luciole. */
+.seyes-line {
+  line-height: 1;
+  margin-bottom: -2.25px;
+}
+@supports (text-box: trim-both cap alphabetic) {
+  .seyes-line {
+    text-box: trim-both cap alphabetic;
+    margin-bottom: 1px;
+  }
+}
+
+/* ── Dictadapt only ───────────────────────────────────────────────────── */
+
+:root {
+  /* Reading typography — v1 pins it to the most comfortable DysAdapt
+     profile; the v2 accessibility panel will rewrite it on <html>. */
+  --reading-font: 'Andika';
+  --reading-size: 20px;
+  --reading-line-height: 1.8;
+  --reading-letter-spacing: 0.05em;
+}
+
+/* Children tap a lot and fast: no blue flash on tap. */
+body {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Responsive Spacing Utilities */
 @layer utilities {
-  .container-px {
-    @apply px-4 sm:px-6 lg:px-8;
-  }
-
-  .thumb-zone-nav {
-    @apply fixed bottom-0 left-0 right-0 p-4 pb-8 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 z-50;
-  }
-
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
-
   .safe-top {
     padding-top: env(safe-area-inset-top);
   }
-
-  .breadcrumb-step {
-    @apply flex items-center text-[10px] font-black uppercase tracking-widest transition-all;
-  }
-
   /* Applied to any text a struggling reader has to decode. */
   .reading-text {
     font-family: var(--reading-font), 'Andika', sans-serif;
@@ -210,90 +416,59 @@ body {
   }
 }
 
-/* ── OCR scanner sweep (from DysAdapt) ─────────────────────────────────────── */
+/* OCR in progress: a line of ink sweeping down the photo. */
 @keyframes scanner-beam {
   0% {
     transform: translateY(-100%);
     opacity: 0;
   }
-
-  10% {
-    opacity: 1;
-  }
-
+  10%,
   90% {
     opacity: 1;
   }
-
   100% {
     transform: translateY(400%);
     opacity: 0;
   }
 }
-
 .scanner-beam-active {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
-  background: linear-gradient(to right, transparent, var(--primary), transparent);
-  box-shadow: 0 0 15px var(--primary);
+  height: 3px;
+  background: var(--primary);
   z-index: 10;
   animation: scanner-beam 3s ease-in-out infinite;
 }
 
+/* The part being read aloud: a soft ring around it. */
+@keyframes attention-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--primary) 22%, transparent);
+  }
+}
+.attention-pulse {
+  animation: attention-pulse 1.6s ease-in-out infinite;
+}
+
+/* A part just heard: its tick appears — the only entrance animation kept. */
 @keyframes success-pop {
   0% {
     transform: scale(0.8);
     opacity: 0;
   }
-
-  50% {
-    transform: scale(1.1);
-  }
-
   100% {
     transform: scale(1);
     opacity: 1;
   }
 }
-
 .animate-success {
-  animation: success-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-}
-
-/* ── Attention pulse — draws the eye to the segment currently being read. */
-@keyframes attention-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
-  }
-  50% {
-    box-shadow:
-      0 0 0 6px rgba(79, 70, 229, 0.18),
-      0 0 20px 4px rgba(79, 70, 229, 0.12);
-  }
-}
-
-@keyframes attention-pulse-dark {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(168, 85, 247, 0);
-  }
-  50% {
-    box-shadow:
-      0 0 0 6px rgba(168, 85, 247, 0.24),
-      0 0 20px 4px rgba(168, 85, 247, 0.16);
-  }
-}
-
-.attention-pulse {
-  animation: attention-pulse 1.6s ease-in-out infinite;
-}
-
-:where(.dark, .dark *) .attention-pulse {
-  animation-name: attention-pulse-dark;
+  animation: success-pop 0.3s ease-out forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -302,28 +477,4 @@ body {
   .animate-success {
     animation: none;
   }
-}
-
-/* Smooth State Transitions */
-.slide-enter {
-  transform: translateX(20px);
-  opacity: 0;
-}
-
-.slide-enter-active {
-  transform: translateX(0);
-  opacity: 1;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* ── WCAG AA: dark-mode background fix ──────────────────────────────────────
-   --primary (purple-500) is calibrated for text/icons on the dark bg (4.53:1).
-   It is too light for white text on opaque backgrounds (3.96:1 — fails AA).
-   Override all bg-primary *and* hover:bg-primary surfaces in dark mode to
-   purple-700 (#7e22ce), giving white text 6.98:1 (AA, near-AAA).
-   hover:bg-primary-hover stays at purple-600 via the CSS variable (5.38:1 ✓).
-   ─────────────────────────────────────────────────────────────────────────── */
-:where(.dark, .dark *) .bg-primary,
-:where(.dark, .dark *) .hover\:bg-primary:hover {
-  background-color: #7e22ce; /* purple-700 */
 }

@@ -17,7 +17,9 @@ describe('cleanOcrText', () => {
   it('keeps an exercise heading on its own line', () => {
     // The teacher deletes it in the verification step; gluing it to the text
     // would hide it in the middle of the first part.
-    expect(cleanOcrText('Dictée n° 4 — CE2\nLe chat dort.')).toBe('Dictée n° 4 — CE2\nLe chat dort.');
+    expect(cleanOcrText('Dictée n° 4 — CE2\nLe chat dort.')).toBe(
+      'Dictée n° 4 — CE2\nLe chat dort.'
+    );
   });
 
   it('keeps a sentence boundary as a line break', () => {

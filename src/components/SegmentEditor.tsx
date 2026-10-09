@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { Link2, Pencil, Volume2 } from 'lucide-react';
 import { countWords } from '@/lib/segment';
+import { IconButton, cx } from '@/components/ui';
 
 interface SegmentEditorProps {
   /** Segment texts, in reading order. */
@@ -73,7 +74,7 @@ export default function SegmentEditor({
 
   return (
     <div>
-      <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+      <p className="text-sm text-muted mb-4">
         Touchez un <span className="font-bold">mot</span> pour couper juste avant,{' '}
         <span className="font-bold">Réunir</span> pour coller deux parties, ou le{' '}
         <span className="font-bold">crayon</span> pour corriger le texte d&apos;une partie.
@@ -88,13 +89,12 @@ export default function SegmentEditor({
           return (
             <li key={`${segmentIndex}-${segment}`}>
               <div
-                className={`flex items-start gap-3 rounded-2xl border p-3 transition-all ${
-                  isSpeaking
-                    ? 'border-primary bg-primary-muted'
-                    : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900'
-                }`}
+                className={cx(
+                  'flex items-start gap-3 rounded-lg border p-3 transition-colors',
+                  isSpeaking ? 'border-primary bg-primary-muted' : 'border-border bg-surface'
+                )}
               >
-                <span className="mt-1.5 w-7 h-7 flex-shrink-0 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs font-black flex items-center justify-center">
+                <span className="mt-1.5 size-7 shrink-0 rounded-full bg-surface-sunken text-muted text-sm font-bold flex items-center justify-center">
                   {segmentIndex + 1}
                 </span>
 
@@ -104,13 +104,15 @@ export default function SegmentEditor({
                     value={editing.draft}
                     autoFocus
                     aria-label={`Texte de la partie ${segmentIndex + 1}`}
-                    onChange={(event) => setEditing({ index: segmentIndex, draft: event.target.value })}
+                    onChange={(event) =>
+                      setEditing({ index: segmentIndex, draft: event.target.value })
+                    }
                     onBlur={commitEdit}
                     onKeyDown={(event) => {
                       if (event.key === 'Enter') commitEdit();
                       if (event.key === 'Escape') cancelEdit();
                     }}
-                    className="reading-text flex-1 min-w-0 px-3 py-1.5 rounded-xl border border-primary bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none"
+                    className="reading-text flex-1 min-w-0 px-3 py-1.5 rounded-md border border-primary bg-surface text-foreground"
                   />
                 ) : (
                   <div className="flex-1 min-w-0 flex flex-wrap items-center gap-x-0.5 gap-y-1 reading-text">
@@ -121,11 +123,12 @@ export default function SegmentEditor({
                         disabled={wordIndex === 0}
                         onClick={() => splitAt(segmentIndex, wordIndex)}
                         title={wordIndex === 0 ? undefined : `Couper avant « ${word} »`}
-                        className={`px-1 rounded-md transition-colors ${
+                        className={cx(
+                          'px-1 rounded-sm text-foreground transition-colors',
                           wordIndex === 0
-                            ? 'cursor-default text-slate-900 dark:text-slate-100'
-                            : 'text-slate-900 dark:text-slate-100 hover:bg-primary-muted hover:text-primary'
-                        }`}
+                            ? 'cursor-default'
+                            : 'hover:bg-primary-muted hover:text-primary'
+                        )}
                       >
                         {word}
                       </button>
@@ -133,29 +136,24 @@ export default function SegmentEditor({
                   </div>
                 )}
 
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  <span className="hidden sm:inline text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                <div className="flex items-center gap-1 shrink-0">
+                  <span className="hidden sm:inline text-sm text-muted mr-1">
                     {countWords(segment)} mot{countWords(segment) > 1 ? 's' : ''}
                   </span>
                   {!isEditing && (
-                    <button
-                      type="button"
+                    <IconButton
+                      icon={Pencil}
+                      size="sm"
+                      label={`Modifier la partie ${segmentIndex + 1}`}
                       onClick={() => startEditing(segmentIndex)}
-                      aria-label={`Modifier la partie ${segmentIndex + 1}`}
-                      title="Modifier le texte"
-                      className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-primary transition-colors"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </button>
+                    />
                   )}
-                  <button
-                    type="button"
+                  <IconButton
+                    icon={Volume2}
+                    size="sm"
+                    label={`Écouter la partie ${segmentIndex + 1}`}
                     onClick={() => onPreview(segment)}
-                    aria-label={`Écouter la partie ${segmentIndex + 1}`}
-                    className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-primary transition-colors"
-                  >
-                    <Volume2 className="w-4 h-4" />
-                  </button>
+                  />
                 </div>
               </div>
 
@@ -165,9 +163,9 @@ export default function SegmentEditor({
                     type="button"
                     onClick={() => mergeWithNext(segmentIndex)}
                     aria-label={`Réunir les parties ${segmentIndex + 1} et ${segmentIndex + 2}`}
-                    className="my-1 flex items-center gap-1.5 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 hover:border-primary hover:text-primary transition-all active:scale-95"
+                    className="my-1 flex items-center gap-1.5 min-h-8 px-3 rounded-full border border-border-strong bg-surface text-sm text-muted hover:border-primary hover:text-primary transition-colors"
                   >
-                    <Link2 className="w-3.5 h-3.5" />
+                    <Link2 className="size-4" aria-hidden="true" />
                     Réunir
                   </button>
                 </div>

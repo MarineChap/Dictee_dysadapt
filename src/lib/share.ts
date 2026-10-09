@@ -76,7 +76,9 @@ function fromBase64Url(value: string): Uint8Array {
  * use `:` as a separator.
  */
 export function encodePayload(dictation: Dictation): string {
-  return toBase64Url(deflateSync(strToU8(JSON.stringify(buildWirePayload(dictation))), { level: 9 }));
+  return toBase64Url(
+    deflateSync(strToU8(JSON.stringify(buildWirePayload(dictation))), { level: 9 })
+  );
 }
 
 /**

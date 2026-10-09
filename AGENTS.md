@@ -66,12 +66,20 @@ src/
 ## Key patterns
 
 ### Design system
-`src/styles/globals.css` is a near-verbatim copy of `dysadapt/frontend/src/app/globals.css`.
-Do not invent colours: use `bg-primary`, `text-primary`, `bg-surface`, `bg-primary-muted`.
-The WCAG override at the bottom of the file (`bg-primary` → `#7e22ce` in dark mode) is load-bearing
-— removing it makes every dark-mode button fail AA. Buttons carry
-`transition-all active:scale-95`; cards are `rounded-3xl`; eyebrow labels are
-`text-[10px] font-black uppercase tracking-widest`.
+DysAdapt's, as-is: one product, two tools. `src/styles/globals.css` copies DysAdapt's tokens,
+closed theme and base layer verbatim (`dysadapt/frontend/src/app/globals.css`); `src/components/ui/`
+copies its building blocks (`Button`, `ButtonLink` — with a react-router `to` —, `IconButton`, `Card`,
+`SectionTitle`, `Notice`, `Field`/`Input`/`Textarea`/`Select`, `SeyesZone`…); `eslint-rules/` copies
+its design-system lint. Keep the three in sync with DysAdapt rather than diverging here.
+
+Screens compose `@/components/ui` and never restyle them with colours. The theme is closed: no
+Tailwind palette colour (`slate-*`, `indigo-*`…), no `font-black`, no `uppercase`/`tracking-*`, no
+`rounded-2xl` and above, no card shadows, blur or gradients, no text under 12 px —
+`npm run lint` (zero warnings) rejects them. Interface font: Luciole; reading font (`.reading-text`):
+Andika. Rules and rationale: `dysadapt/docs/frontend-design-system.md`.
+
+Signed in, the bar is DysAdapt's (its logo leads to the teacher's dashboard), so Dictadapt reads as
+one of its tools; without an account, Dictadapt's own logo, same look.
 
 ### Segmentation
 `segmentText()` is pure and has no dependencies: break on punctuation (the mark stays glued to the

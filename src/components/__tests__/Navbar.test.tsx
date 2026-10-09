@@ -41,7 +41,7 @@ describe('the back arrow', () => {
 
     const back = await screen.findByTestId('back-to-space');
     expect(back).toHaveAttribute('href', '/dashboard');
-    expect(back).toHaveTextContent('Mon espace');
+    expect(back).toHaveTextContent('Tableau de bord');
     expect(screen.queryByRole('link', { name: 'Mes dictées' })).toBeNull();
     expect(screen.queryByTestId('account-dashboard')).toBeNull();
   });

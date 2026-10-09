@@ -3,6 +3,7 @@ import QRCode from 'qrcode';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { encodeDictation } from '@/lib/share';
 import type { Dictation } from '@/lib/types';
+import { IconButton, Notice } from '@/components/ui';
 
 interface QrShareProps {
   dictation: Dictation;
@@ -35,7 +36,7 @@ export default function QrShare({ dictation }: QrShareProps) {
               errorCorrectionLevel: 'L',
               margin: 2,
               width: 512,
-              color: { dark: '#0f172a', light: '#ffffff' },
+              color: { dark: '#22201c', light: '#ffffff' },
             })
           )
         );
@@ -62,18 +63,14 @@ export default function QrShare({ dictation }: QrShareProps) {
   const images = current?.images ?? null;
 
   if (error) {
-    return (
-      <p className="rounded-2xl border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/30 p-4 text-sm text-amber-800 dark:text-amber-200">
-        {error}
-      </p>
-    );
+    return <Notice tone="warning">{error}</Notice>;
   }
 
   if (!images) {
     return (
-      <div className="flex items-center justify-center gap-2 p-12 text-slate-400">
-        <Loader2 className="w-5 h-5 animate-spin" />
-        <span className="text-sm font-medium">Préparation du QR code…</span>
+      <div className="flex items-center justify-center gap-2 p-12 text-muted">
+        <Loader2 className="size-5 animate-spin" aria-hidden="true" />
+        <span>Préparation du QR code…</span>
       </div>
     );
   }
@@ -83,7 +80,7 @@ export default function QrShare({ dictation }: QrShareProps) {
   return (
     <div className="flex flex-col items-center gap-4">
       {/* White plate: a QR code must stay black-on-white even in dark theme. */}
-      <div className="rounded-3xl bg-white p-4 shadow-sm border border-slate-200 dark:border-slate-800">
+      <div className="rounded-lg bg-white p-4 border border-border">
         <img
           src={images[index]}
           alt={
@@ -98,29 +95,23 @@ export default function QrShare({ dictation }: QrShareProps) {
       {multi && (
         <>
           <div className="flex items-center gap-4">
-            <button
-              type="button"
+            <IconButton
+              icon={ChevronLeft}
+              label="QR code précédent"
               disabled={index === 0}
               onClick={() => setIndex((i) => i - 1)}
-              aria-label="QR code précédent"
-              className="p-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+            />
+            <span className="font-bold text-foreground">
               Code {index + 1} sur {images.length}
             </span>
-            <button
-              type="button"
+            <IconButton
+              icon={ChevronRight}
+              label="QR code suivant"
               disabled={index === images.length - 1}
               onClick={() => setIndex((i) => i + 1)}
-              aria-label="QR code suivant"
-              className="p-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 transition-colors"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
+            />
           </div>
-          <p className="text-xs text-center text-slate-500 dark:text-slate-400 max-w-xs">
+          <p className="text-sm text-center text-muted max-w-xs">
             Ce texte tient sur {images.length} codes. Faites-les scanner l&apos;un après
             l&apos;autre — l&apos;ordre n&apos;a pas d&apos;importance.
           </p>
@@ -128,7 +119,7 @@ export default function QrShare({ dictation }: QrShareProps) {
       )}
 
       {!multi && (
-        <p className="text-xs text-center text-slate-500 dark:text-slate-400 max-w-xs">
+        <p className="text-sm text-center text-muted max-w-xs">
           Sur l&apos;appareil de l&apos;élève, ouvrez Dictadapt puis{' '}
           <span className="font-bold">Recevoir un QR code</span>.
         </p>

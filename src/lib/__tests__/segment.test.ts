@@ -45,8 +45,8 @@ describe('segmentText', () => {
 
   it('never loses or reorders a single word', () => {
     const source =
-      "Le petit chat noir dormait paisiblement sur le vieux fauteuil du salon, " +
-      "pendant que la pluie tombait sans relâche.";
+      'Le petit chat noir dormait paisiblement sur le vieux fauteuil du salon, ' +
+      'pendant que la pluie tombait sans relâche.';
     expect(segmentText(source).join(' ')).toBe(source);
   });
 
@@ -65,11 +65,13 @@ describe('segmentText', () => {
   });
 
   it('does not strand a linking word at the end of a part', () => {
-    const parts = segmentText(
-      'Le chat de la voisine grimpa sur le toit de la maison rouge.'
-    );
+    const parts = segmentText('Le chat de la voisine grimpa sur le toit de la maison rouge.');
     for (const part of parts) {
-      const last = part.replace(/[.,;:!?…»]+$/, '').split(' ').pop()!.toLowerCase();
+      const last = part
+        .replace(/[.,;:!?…»]+$/, '')
+        .split(' ')
+        .pop()!
+        .toLowerCase();
       expect(['le', 'la', 'les', 'de', 'du', 'des', 'un', 'une', 'sur', 'et']).not.toContain(last);
     }
   });
@@ -106,7 +108,7 @@ describe('segmentText', () => {
   it('breaks on the other strong punctuation marks', () => {
     for (const source of [
       'Où vas-tu ? Je rentre chez moi.',
-      "Quelle chance ! Nous avons gagné la partie.",
+      'Quelle chance ! Nous avons gagné la partie.',
       'Il fit une pause ; puis il reprit sa lecture.',
       'Voici la liste : du pain, du lait, des œufs.',
     ]) {

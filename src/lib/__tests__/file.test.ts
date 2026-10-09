@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  FILE_FORMAT,
-  decodeDictationFile,
-  dictationFileName,
-  encodeDictationFile,
-} from '../file';
+import { FILE_FORMAT, decodeDictationFile, dictationFileName, encodeDictationFile } from '../file';
 import type { Dictation } from '../types';
 
 function makeDictation(segmentTexts: string[], title = 'Dictée du lundi'): Dictation {

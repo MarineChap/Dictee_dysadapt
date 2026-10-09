@@ -1,67 +1,63 @@
 import { useId } from 'react';
 
 interface DictadaptLogoProps {
+  /** Height of the book mark, in px; the wordmark follows it */
   markSize?: number;
   showWordmark?: boolean;
-  wordmarkClass?: string;
+  /** The name only from 640 px up: a phone's bar keeps the book */
+  compactOnPhone?: boolean;
   className?: string;
 }
 
 /**
- * Sibling of DysadaptLogo: same open book, same brand gradient, with the
- * central sparkle replaced by a sound wave — this tool speaks.
+ * Sibling of DysadaptLogo: the same ink book, its ruled lines turned into a
+ * sound wave (this tool reads aloud), and the name in school cursive
+ * (Marelle, bundled for offline use). Drawn in currentColor (text-primary).
  */
 export default function DictadaptLogo({
   markSize = 28,
   showWordmark = true,
-  wordmarkClass = 'text-xl font-black tracking-tighter text-slate-900 dark:text-white italic lowercase leading-none',
+  compactOnPhone = false,
   className = '',
 }: DictadaptLogoProps) {
-  const uid = useId().replace(/:/g, '');
-  const gradId = `dtG-${uid}`;
+  const maskId = `dt-wave-${useId().replace(/:/g, '')}`;
 
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
+    <span className={`inline-flex items-center gap-2 text-primary ${className}`}>
       <svg
         width={markSize}
         height={markSize}
         viewBox="0 0 100 100"
         aria-hidden="true"
-        style={{ flexShrink: 0 }}
+        className="shrink-0"
       >
-        <style>{`
-          .dt-page-${uid} { fill: #1e1b4b; }
-          :where(.dark, .dark *) .dt-page-${uid} { fill: #4f46e5; }
-        `}</style>
         <defs>
-          <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#e9d5ff" />
-            <stop offset="45%" stopColor="#a855f7" />
-            <stop offset="100%" stopColor="#7c3aed" />
-          </linearGradient>
+          {/* The wave is cut out of the pages, so it shows the page behind */}
+          <mask id={maskId}>
+            <rect width="100" height="100" fill="white" />
+            <path
+              d="M18 50 V 58 M27 44 V 64 M36 40 V 68 M64 40 V 68 M73 44 V 64 M82 50 V 58"
+              stroke="black"
+              strokeWidth="4"
+              strokeLinecap="round"
+            />
+          </mask>
         </defs>
-        {/* Left book page */}
-        <path
-          className={`dt-page-${uid}`}
-          d="M9 22 C 12 21, 30 20, 41 26 L 47 30 L 47 88 L 41 85 C 30 80, 14 80, 11 81 C 9.5 81, 9 79.5, 9 78 Z"
-        />
-        {/* Right book page */}
-        <path
-          className={`dt-page-${uid}`}
-          d="M91 22 C 88 21, 70 20, 59 26 L 53 30 L 53 88 L 59 85 C 70 80, 86 80, 89 81 C 90.5 81, 91 79.5, 91 78 Z"
-        />
-        <rect x="48.5" y="28" width="3" height="58" rx="1.5" fill="rgba(255,255,255,.05)" />
-        {/* Sound wave: five bars rising out of the spine — the tool reads aloud */}
-        <g fill={`url(#${gradId})`}>
-          <rect x="28" y="46" width="6" height="9" rx="3" />
-          <rect x="38" y="39" width="6" height="23" rx="3" />
-          <rect x="47" y="31" width="6" height="39" rx="3" />
-          <rect x="56" y="39" width="6" height="23" rx="3" />
-          <rect x="66" y="46" width="6" height="9" rx="3" />
+        <g fill="currentColor" mask={`url(#${maskId})`}>
+          <path d="M9 22 C 12 21, 30 20, 41 26 L 47 30 L 47 88 L 41 85 C 30 80, 14 80, 11 81 C 9.5 81, 9 79.5, 9 78 Z" />
+          <path d="M91 22 C 88 21, 70 20, 59 26 L 53 30 L 53 88 L 59 85 C 70 80, 86 80, 89 81 C 90.5 81, 91 79.5, 91 78 Z" />
         </g>
-        <rect x="47" y="38" width="6" height="12" rx="3" fill="#fff" opacity=".3" />
       </svg>
-      {showWordmark && <span className={wordmarkClass}>dictadapt</span>}
-    </div>
+      {showWordmark && (
+        // Marelle's descenders (the p) hang low: a smaller size and a lift keep
+        // the name inside the bar, centred on the book like DysAdapt's.
+        <span
+          className={`leading-none -translate-y-[0.12em] ${compactOnPhone ? 'hidden sm:inline' : ''}`}
+          style={{ fontFamily: 'Marelle, cursive', fontSize: markSize * 0.78 }}
+        >
+          dictadapt
+        </span>
+      )}
+    </span>
   );
 }

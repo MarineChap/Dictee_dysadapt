@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { Button } from '@/components/ui';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -46,31 +47,17 @@ export default function ConfirmDialog({
         // Clicking the backdrop (the dialog element itself) dismisses it.
         if (event.target === ref.current) onCancel();
       }}
-      className="m-auto w-[calc(100vw-2rem)] max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xl backdrop:bg-black/40 backdrop:backdrop-blur-sm"
+      className="m-auto w-[calc(100vw-2rem)] max-w-md rounded-lg border border-border bg-surface text-foreground p-6 shadow-overlay backdrop:bg-black/40"
     >
-      <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tight mb-2">
-        {title}
-      </h2>
-      <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{description}</p>
-      <div className="flex items-center justify-end gap-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-4 py-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-sm font-medium transition-colors"
-        >
+      <h2 className="text-xl font-bold mb-2">{title}</h2>
+      <p className="text-muted mb-6">{description}</p>
+      <div className="flex flex-wrap items-center justify-end gap-3">
+        <Button variant="secondary" onClick={onCancel}>
           {cancelLabel}
-        </button>
-        <button
-          type="button"
-          onClick={onConfirm}
-          className={`px-5 py-2 rounded-lg text-sm font-bold text-white shadow-lg transition-all active:scale-95 ${
-            destructive
-              ? 'bg-red-600 hover:bg-red-700 shadow-red-600/20'
-              : 'bg-primary hover:bg-primary-hover shadow-primary-muted'
-          }`}
-        >
+        </Button>
+        <Button variant={destructive ? 'danger' : 'primary'} onClick={onConfirm}>
           {confirmLabel}
-        </button>
+        </Button>
       </div>
     </dialog>
   );

@@ -1,4 +1,5 @@
 import { Check } from 'lucide-react';
+import { cx } from '@/components/ui';
 
 interface StepIndicatorProps {
   steps: string[];
@@ -7,20 +8,18 @@ interface StepIndicatorProps {
 }
 
 /**
- * Desktop stepper / mobile breadcrumb, same two-mode pattern as DysAdapt's
- * StepIndicator.
+ * A stepper on a tablet or computer, one line on a phone.
  */
 export default function StepIndicator({ steps, current }: StepIndicatorProps) {
   return (
     <div className="mb-8">
-      {/* Mobile: just "3/5 — Découpage", the full rail does not fit a phone. */}
-      <div className="sm:hidden flex items-center gap-2">
-        <span className="breadcrumb-step text-primary">
+      {/* Phone: "Étape 3/5 · Découpage", the full rail does not fit. */}
+      <p className="sm:hidden text-sm">
+        <span className="font-bold text-primary">
           Étape {current + 1}/{steps.length}
         </span>
-        <span className="text-slate-300 dark:text-slate-700">·</span>
-        <span className="breadcrumb-step text-slate-500 dark:text-slate-400">{steps[current]}</span>
-      </div>
+        <span className="text-muted"> · {steps[current]}</span>
+      </p>
 
       <ol className="hidden sm:flex items-center gap-2">
         {steps.map((step, index) => {
@@ -28,28 +27,28 @@ export default function StepIndicator({ steps, current }: StepIndicatorProps) {
           const active = index === current;
 
           return (
-            <li key={step} className="flex items-center gap-2 flex-1 last:flex-none">
+            <li
+              key={step}
+              aria-current={active ? 'step' : undefined}
+              className="flex items-center gap-2 flex-1 last:flex-none"
+            >
               <div className="flex items-center gap-2 min-w-0">
                 <span
                   aria-hidden="true"
-                  className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-black flex-shrink-0 transition-all ${
-                    done
-                      ? 'bg-emerald-500 text-white'
-                      : active
-                        ? 'bg-primary text-white shadow-lg shadow-primary-muted'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500'
-                  }`}
+                  className={cx(
+                    'size-7 rounded-full border flex items-center justify-center text-sm font-bold shrink-0',
+                    done && 'bg-primary-muted border-primary text-primary',
+                    active && 'bg-primary border-primary text-white',
+                    !done && !active && 'bg-surface border-border-strong text-muted'
+                  )}
                 >
-                  {done ? <Check className="w-4 h-4" /> : index + 1}
+                  {done ? <Check className="size-4" /> : index + 1}
                 </span>
                 <span
-                  className={`breadcrumb-step truncate ${
-                    active
-                      ? 'text-primary'
-                      : done
-                        ? 'text-slate-500 dark:text-slate-400'
-                        : 'text-slate-400 dark:text-slate-600'
-                  }`}
+                  className={cx(
+                    'text-sm truncate',
+                    active ? 'font-bold text-primary' : done ? 'text-foreground' : 'text-muted'
+                  )}
                 >
                   {step}
                 </span>
@@ -57,9 +56,7 @@ export default function StepIndicator({ steps, current }: StepIndicatorProps) {
               {index < steps.length - 1 && (
                 <span
                   aria-hidden="true"
-                  className={`h-px flex-1 transition-colors ${
-                    done ? 'bg-emerald-400' : 'bg-slate-200 dark:bg-slate-800'
-                  }`}
+                  className={cx('h-px flex-1', done ? 'bg-primary' : 'bg-border')}
                 />
               )}
             </li>

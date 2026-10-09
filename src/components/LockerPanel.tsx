@@ -8,6 +8,7 @@ import {
   type AssignedStudent,
   type Student,
 } from '@/lib/remote';
+import { Card, Notice, SectionTitle, cx } from '@/components/ui';
 
 interface LockerPanelProps {
   dictationId: string;
@@ -58,58 +59,61 @@ export default function LockerPanel({ dictationId }: LockerPanelProps) {
   }
 
   return (
-    <section
-      data-testid="locker-panel"
-      className="mb-8 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6"
-    >
-      <h2 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">
-        <Inbox className="w-4 h-4" />
-        Casier des élèves
-      </h2>
-      <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-        Cochez un élève pour mettre la dictée dans son casier DysAdapt.
-      </p>
+    <Card as="section" data-testid="locker-panel" className="mb-8 flex flex-col gap-4">
+      <div className="flex flex-col gap-1">
+        <SectionTitle icon={<Inbox className="size-5 text-primary" aria-hidden="true" />}>
+          Casier des élèves
+        </SectionTitle>
+        <p className="text-muted">
+          Cochez un élève pour mettre la dictée dans son casier DysAdapt.
+        </p>
+      </div>
 
-      {error && <p className="mb-3 text-sm font-bold text-red-600 dark:text-red-400">{error}</p>}
+      {error && (
+        <Notice tone="danger" live>
+          {error}
+        </Notice>
+      )}
 
       {students === null && !error && (
-        <div className="h-10 rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
+        <div className="h-10 rounded-md bg-surface-sunken animate-pulse" />
       )}
 
       {students?.length === 0 && (
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          Aucun élève dans votre compte : créez-en un dans DysAdapt.
-        </p>
+        <p className="text-muted">Aucun élève dans votre compte : créez-en un dans DysAdapt.</p>
       )}
 
-      <ul className="flex flex-wrap gap-2">
-        {students?.map((student) => {
-          const inLocker = assigned.some((a) => a.profile_id === student.id);
-          return (
-            <li key={student.id}>
-              <button
-                type="button"
-                role="checkbox"
-                aria-checked={inLocker}
-                disabled={busy !== null}
-                onClick={() => void toggle(student)}
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold border transition-all active:scale-95 disabled:opacity-60 ${
-                  inLocker
-                    ? 'bg-primary border-primary text-white'
-                    : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-primary hover:text-primary'
-                }`}
-              >
-                {busy === student.id ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  inLocker && <Check className="w-4 h-4" />
-                )}
-                {student.name}
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
+      {students && students.length > 0 && (
+        <ul className="flex flex-wrap gap-2">
+          {students.map((student) => {
+            const inLocker = assigned.some((a) => a.profile_id === student.id);
+            return (
+              <li key={student.id}>
+                <button
+                  type="button"
+                  role="checkbox"
+                  aria-checked={inLocker}
+                  disabled={busy !== null}
+                  onClick={() => void toggle(student)}
+                  className={cx(
+                    'inline-flex items-center gap-1.5 min-h-11 px-4 rounded-md border transition-colors disabled:opacity-60',
+                    inLocker
+                      ? 'bg-primary-muted border-primary text-primary font-bold'
+                      : 'bg-surface border-border-strong text-foreground hover:border-primary'
+                  )}
+                >
+                  {busy === student.id ? (
+                    <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                  ) : (
+                    inLocker && <Check className="size-4" aria-hidden="true" />
+                  )}
+                  {student.name}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </Card>
   );
 }

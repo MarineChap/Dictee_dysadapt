@@ -2,8 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import jsQR from 'jsqr';
 import { nanoid } from 'nanoid';
-import { AlertTriangle, Check, QrCode } from 'lucide-react';
+import { QrCode } from 'lucide-react';
 import PageShell from '@/components/PageShell';
+import { Button, Card, Notice } from '@/components/ui';
 import { ChunkCollector, decodeChunks, parseChunk, type ImportedDictation } from '@/lib/share';
 import { saveDictation } from '@/lib/db';
 import { newDictationId } from '@/lib/ids';
@@ -139,104 +140,73 @@ export default function Scanner() {
 
   return (
     <PageShell title="Recevoir une dictée" backTo="/" backLabel="Mes dictées">
-      {status === 'idle' && (
-        <div className="space-y-4">
-          <div className="rounded-[2.5rem] border-2 border-dashed border-slate-200 dark:border-slate-700 p-12 text-center">
-            <span className="w-16 h-16 rounded-full bg-primary-muted flex items-center justify-center mx-auto mb-4">
-              <QrCode className="w-8 h-8 text-primary" />
+      <div className="max-w-xl mx-auto flex flex-col gap-5">
+        {status === 'idle' && (
+          <Card padding="lg" className="flex flex-col items-center gap-5 text-center">
+            <span className="size-14 rounded-full bg-primary-muted flex items-center justify-center">
+              <QrCode className="size-7 text-primary" aria-hidden="true" />
             </span>
-            <p className="font-black text-slate-900 dark:text-white tracking-tight">
-              Scanner le QR code de l&apos;enseignant
-            </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
-              La dictée est copiée sur cet appareil. Aucune connexion internet n&apos;est
-              nécessaire.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => void start()}
-            className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-primary/20"
-          >
-            <QrCode className="w-5 h-5" />
-            Ouvrir la caméra
-          </button>
-        </div>
-      )}
-
-      {status === 'denied' && (
-        <div className="flex items-start gap-3 rounded-2xl border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/30 p-4">
-          <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm text-amber-800 dark:text-amber-200">
-              L&apos;accès à la caméra a été refusé. Autorisez-le dans les réglages du navigateur,
-              puis réessayez.
-            </p>
-            <button
-              type="button"
-              onClick={() => void start()}
-              className="mt-3 bg-primary hover:bg-primary-hover text-white px-5 py-2 rounded-lg text-sm font-bold shadow-lg shadow-primary-muted transition-all active:scale-95"
-            >
-              Réessayer
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div className={status === 'scanning' ? 'space-y-4' : 'hidden'}>
-        <div className="relative overflow-hidden rounded-3xl border border-slate-200 dark:border-slate-800 bg-black">
-          <video ref={videoRef} playsInline muted className="w-full aspect-[4/3] object-cover" />
-          <span className="scanner-beam-active" aria-hidden="true" />
-        </div>
-
-        {error && (
-          <p className="rounded-2xl border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/30 p-4 text-sm text-amber-800 dark:text-amber-200">
-            {error}
-          </p>
-        )}
-
-        {expected > 1 && (
-          <p className="text-center text-sm text-slate-600 dark:text-slate-300">
-            <span className="font-black">
-              {received} code{received > 1 ? 's' : ''} sur {expected}
-            </span>
-            {missing.length > 0 && (
-              <span className="block text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Il manque encore le code {missing.join(', ')}.
-              </span>
-            )}
-          </p>
-        )}
-
-        <p className="text-center text-xs text-slate-500 dark:text-slate-400">
-          Placez le QR code bien dans le cadre.
-        </p>
-      </div>
-
-      {status === 'done' && imported && (
-        <div className="space-y-5">
-          <div className="animate-success flex items-center gap-3 rounded-3xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/30 p-5">
-            <span className="w-11 h-11 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
-              <Check className="w-6 h-6 text-white" />
-            </span>
-            <div className="min-w-0">
-              <p className="font-black text-emerald-800 dark:text-emerald-200 tracking-tight truncate">
-                {imported.title}
+            <div className="flex flex-col gap-1">
+              <p className="text-lg font-bold text-foreground">
+                Scanner le QR code de l&apos;enseignant
               </p>
-              <p className="text-xs text-emerald-700 dark:text-emerald-300">
-                {imported.segments.length} parties reçues
+              <p className="text-muted max-w-sm">
+                La dictée est copiée sur cet appareil. Aucune connexion internet n&apos;est
+                nécessaire.
               </p>
             </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => void save()}
-            className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-primary/20"
+            <Button size="lg" icon={QrCode} fullWidth onClick={() => void start()}>
+              Ouvrir la caméra
+            </Button>
+          </Card>
+        )}
+
+        {status === 'denied' && (
+          <Notice
+            tone="warning"
+            live
+            actions={<Button onClick={() => void start()}>Réessayer</Button>}
           >
-            Commencer la dictée
-          </button>
+            L&apos;accès à la caméra a été refusé. Autorisez-le dans les réglages du navigateur,
+            puis réessayez.
+          </Notice>
+        )}
+
+        <div className={status === 'scanning' ? 'flex flex-col gap-4' : 'hidden'}>
+          <div className="relative overflow-hidden rounded-lg border border-border bg-black">
+            <video ref={videoRef} playsInline muted className="w-full aspect-[4/3] object-cover" />
+            <span className="scanner-beam-active" aria-hidden="true" />
+          </div>
+
+          {error && <Notice tone="warning">{error}</Notice>}
+
+          {expected > 1 && (
+            <p className="text-center" role="status">
+              <span className="font-bold text-foreground">
+                {received} code{received > 1 ? 's' : ''} sur {expected}
+              </span>
+              {missing.length > 0 && (
+                <span className="block text-sm text-muted mt-1">
+                  Il manque encore le code {missing.join(', ')}.
+                </span>
+              )}
+            </p>
+          )}
+
+          <p className="text-center text-sm text-muted">Placez le QR code bien dans le cadre.</p>
         </div>
-      )}
+
+        {status === 'done' && imported && (
+          <>
+            <Notice tone="success" title={imported.title} className="animate-success">
+              {imported.segments.length} parties reçues
+            </Notice>
+            <Button size="lg" fullWidth onClick={() => void save()}>
+              Commencer la dictée
+            </Button>
+          </>
+        )}
+      </div>
     </PageShell>
   );
 }
