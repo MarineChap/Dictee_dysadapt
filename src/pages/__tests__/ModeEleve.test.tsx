@@ -159,7 +159,12 @@ describe('Mode élève', () => {
 
 describe('Mode élève from a DysAdapt locker', () => {
   const ASSIGNMENT = 'assign-1';
-  let progressSent: string[][];
+  let progressSent: { url: string; listened: string[] }[];
+  let fetched: string[];
+  // The session DysAdapt answers: a teacher previewing the locker, or nobody
+  // (a student who opened their locker with their code).
+  let session: unknown;
+  let studentStatus: number;
 
   function renderFromLocker() {
     return render(
@@ -171,27 +176,34 @@ describe('Mode élève from a DysAdapt locker', () => {
     );
   }
 
+  const pupil = {
+    assignment_id: ASSIGNMENT,
+    dictation_id: 'dict-1',
+    profile_id: 'lea',
+    title: 'Dictée du casier',
+    segments: SEGMENTS.map((text, index) => ({ id: `s${index}`, text })),
+    speech: { rate: 0.85, voice_uri: null, repeat_after_ms: 0, speak_punctuation: true },
+    show_word_count: false,
+    listened: ['s0'],
+  };
+
   beforeEach(() => {
     progressSent = [];
+    fetched = [];
+    session = {};
+    studentStatus = 200;
+    localStorage.clear();
     vi.stubGlobal('fetch', (url: string, init: RequestInit = {}) => {
-      if (url.endsWith(`/dictation-assignments/${ASSIGNMENT}/progress`)) {
-        progressSent.push(JSON.parse(String(init.body)).listened);
+      fetched.push(url);
+      if (url === '/api/auth/session') {
+        return Promise.resolve(new Response(JSON.stringify(session)));
+      }
+      if (url.endsWith('/progress')) {
+        progressSent.push({ url, listened: JSON.parse(String(init.body)).listened });
         return Promise.resolve(new Response(JSON.stringify({ listened: [] })));
       }
-      return Promise.resolve(
-        new Response(
-          JSON.stringify({
-            assignment_id: ASSIGNMENT,
-            dictation_id: 'dict-1',
-            profile_id: 'lea',
-            title: 'Dictée du casier',
-            segments: SEGMENTS.map((text, index) => ({ id: `s${index}`, text })),
-            speech: { rate: 0.85, voice_uri: null, repeat_after_ms: 0, speak_punctuation: true },
-            show_word_count: false,
-            listened: ['s0'],
-          })
-        )
-      );
+      const status = url.startsWith('/api/eleve/') ? studentStatus : 200;
+      return Promise.resolve(new Response(JSON.stringify(pupil), { status }));
     });
   });
 
@@ -206,12 +218,44 @@ describe('Mode élève from a DysAdapt locker', () => {
     }
   });
 
-  it('saves each part heard in the account', async () => {
+  it('opens it with the access code when no teacher is signed in', async () => {
     const user = userEvent.setup();
     renderFromLocker();
 
     await user.click(await screen.findByRole('button', { name: /Écouter la partie 3/ }));
 
-    await waitFor(() => expect(progressSent).toEqual([['s0', 's2']]));
+    await waitFor(() =>
+      expect(progressSent).toEqual([
+        { url: `/api/eleve/dictations/${ASSIGNMENT}/progress`, listened: ['s0', 's2'] },
+      ])
+    );
+    expect(fetched).toContain(`/api/eleve/dictations/${ASSIGNMENT}`);
+    expect(fetched.some((url) => url.startsWith('/api/backend/'))).toBe(false);
+  });
+
+  it("goes through the teacher's session when one is signed in", async () => {
+    session = { user: { id: 'teacher-1' } };
+    const user = userEvent.setup();
+    renderFromLocker();
+
+    await user.click(await screen.findByRole('button', { name: /Écouter la partie 3/ }));
+
+    await waitFor(() =>
+      expect(progressSent).toEqual([
+        {
+          url: `/api/backend/services/dictation-assignments/${ASSIGNMENT}/progress`,
+          listened: ['s0', 's2'],
+        },
+      ])
+    );
+    expect(fetched.some((url) => url.startsWith('/api/eleve/'))).toBe(false);
+  });
+
+  it('sends a student without a working code to type it again', async () => {
+    studentStatus = 401;
+    renderFromLocker();
+
+    expect(await screen.findByText('Ouvre ton casier avec ton code.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Taper mon code' })).toBeInTheDocument();
   });
 });

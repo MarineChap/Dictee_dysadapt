@@ -33,9 +33,19 @@ export function dashboardUrl(): string {
   return `${DYSADAPT_URL}/dashboard`;
 }
 
-/** The student's locker in DysAdapt, where a pupil goes back to. */
+/** The student's locker in DysAdapt, where the teacher previewing it goes back to. */
 export function lockerUrl(profileId: string): string {
   return `${DYSADAPT_URL}/dashboard/profile/${profileId}/student`;
+}
+
+/** The locker a student opened with their access code, on their own device. */
+export function studentLockerUrl(): string {
+  return `${DYSADAPT_URL}/eleve`;
+}
+
+/** Where a student types their access code. */
+export function studentCodeUrl(): string {
+  return `${DYSADAPT_URL}/code`;
 }
 
 function lastKnown(): Account | null {

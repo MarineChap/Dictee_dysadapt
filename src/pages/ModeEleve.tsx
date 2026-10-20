@@ -4,8 +4,8 @@ import { ArrowLeft, Check, RotateCcw, Volume2 } from 'lucide-react';
 import DictadaptLogo from '@/components/DictadaptLogo';
 import { Button, IconButton, Notice, cx } from '@/components/ui';
 import { clearProgress, getDictation, getProgress, saveProgress } from '@/lib/db';
-import { lockerUrl } from '@/lib/account';
-import { pupilDictation, savePupilProgress } from '@/lib/remote';
+import { fetchAccount, lockerUrl, studentCodeUrl, studentLockerUrl } from '@/lib/account';
+import { pupilDictation, RemoteError, savePupilProgress, type LockerSource } from '@/lib/remote';
 import { cancelSpeech, speak } from '@/lib/speech';
 import { countWords } from '@/lib/segment';
 import type { Dictation } from '@/lib/types';
@@ -19,13 +19,18 @@ import type { Dictation } from '@/lib/types';
  * been heard turns green, so the child always knows where they are.
  *
  * Opened from a DysAdapt locker (`/eleve/casier/:assignmentId`), the dictation
- * and the pupil's progress come from the account instead of this device.
+ * and the pupil's progress come from the account instead of this device:
+ * through the teacher's session when one is signed in (previewing the locker),
+ * else with the student's access code.
  */
 export default function ModeEleve() {
   const { id, assignmentId } = useParams<{ id: string; assignmentId: string }>();
   const navigate = useNavigate();
   // Set when the dictation comes from a student's locker in DysAdapt.
   const [lockerOf, setLockerOf] = useState<string | null>(null);
+  const [source, setSource] = useState<LockerSource | null>(null);
+  // A student without a working code on this device (renewed, expired, forgotten).
+  const [needsCode, setNeedsCode] = useState(false);
 
   const [dictation, setDictation] = useState<Dictation | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -36,9 +41,15 @@ export default function ModeEleve() {
   useEffect(() => {
     if (!assignmentId) return;
     let cancelled = false;
-    pupilDictation(assignmentId)
+    let opener: LockerSource = 'student';
+    fetchAccount()
+      .then((account) => {
+        opener = account ? 'teacher' : 'student';
+        return pupilDictation(assignmentId, opener);
+      })
       .then((pupil) => {
         if (cancelled) return;
+        setSource(opener);
         setLockerOf(pupil.profile_id);
         setDictation({
           id: pupil.dictation_id,
@@ -58,8 +69,12 @@ export default function ModeEleve() {
         });
         setListened(new Set(pupil.listened));
       })
-      .catch(() => {
-        if (!cancelled) setNotFound(true);
+      .catch((err) => {
+        if (cancelled) return;
+        setSource(opener);
+        if (opener === 'student' && err instanceof RemoteError && err.status === 401) {
+          setNeedsCode(true);
+        } else setNotFound(true);
       });
     return () => {
       cancelled = true;
@@ -145,7 +160,7 @@ export default function ModeEleve() {
     if (!dictation) return;
     if (assignmentId) {
       // Best effort: the parts stay green on screen even if the save fails.
-      void savePupilProgress(assignmentId, heard).catch(() => undefined);
+      if (source) void savePupilProgress(assignmentId, heard, source).catch(() => undefined);
     } else {
       void saveProgress({ dictationId: dictation.id, listened: heard, updatedAt: 0 });
     }
@@ -160,10 +175,20 @@ export default function ModeEleve() {
   }
 
   function leave() {
-    if (lockerOf) window.location.assign(lockerUrl(lockerOf));
+    if (source === 'student') window.location.assign(studentLockerUrl());
+    else if (lockerOf) window.location.assign(lockerUrl(lockerOf));
     // Back where the teacher gave it from (the dictation, or the library).
     else if ((window.history.state?.idx ?? 0) > 0) navigate(-1);
     else navigate('/');
+  }
+
+  if (needsCode) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 p-6 text-center">
+        <p className="text-lg font-bold text-foreground">Ouvre ton casier avec ton code.</p>
+        <Button onClick={() => window.location.assign(studentCodeUrl())}>Taper mon code</Button>
+      </div>
+    );
   }
 
   if (notFound) {
@@ -174,7 +199,13 @@ export default function ModeEleve() {
             ? "Cette dictée n'est plus dans ton casier."
             : "Cette dictée n'existe plus."}
         </p>
-        <Button onClick={() => (assignmentId ? window.history.back() : navigate('/'))}>
+        <Button
+          onClick={() => {
+            if (source === 'student') window.location.assign(studentLockerUrl());
+            else if (assignmentId) window.history.back();
+            else navigate('/');
+          }}
+        >
           Retour
         </Button>
       </div>

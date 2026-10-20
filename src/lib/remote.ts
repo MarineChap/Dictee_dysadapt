@@ -2,11 +2,15 @@
  * The DysAdapt API, reached through DysAdapt's same-origin proxy
  * (`/api/backend/*`), which adds the session's token server-side.
  *
- * Only ever called for a signed-in teacher (see account.ts and library.ts).
+ * Only ever called for a signed-in teacher (see account.ts and library.ts),
+ * except a locker's dictation, which a student also opens with the access code
+ * kept on their device: that goes through DysAdapt's student proxy
+ * (`/api/eleve/*`), which adds the code from its httpOnly cookie.
  */
 import type { Dictation } from './types';
 
 const API = '/api/backend/services';
+const STUDENT_API = '/api/eleve';
 
 export class RemoteError extends Error {
   readonly status: number;
@@ -35,13 +39,17 @@ export interface RemoteDictation {
   updated_at: string;
 }
 
-async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${API}${path}`, {
+async function request<T>(url: string, init: RequestInit = {}): Promise<T> {
+  const response = await fetch(url, {
     ...init,
     headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...init.headers },
   });
   if (!response.ok) throw new RemoteError(response.status);
   return (response.status === 204 ? undefined : await response.json()) as T;
+}
+
+function call<T>(path: string, init: RequestInit = {}): Promise<T> {
+  return request(`${API}${path}`, init);
 }
 
 export function toRemote(dictation: Dictation): Omit<RemoteDictation, 'id'> {
@@ -149,12 +157,31 @@ export function unassign(assignmentId: string): Promise<void> {
   return call(`/dictation-assignments/${assignmentId}`, { method: 'DELETE' });
 }
 
-export function pupilDictation(assignmentId: string): Promise<PupilDictation> {
-  return call(`/dictation-assignments/${assignmentId}`);
+/**
+ * Who opens a locker's dictation: the teacher previewing it (their session),
+ * or the student, with their access code.
+ */
+export type LockerSource = 'teacher' | 'student';
+
+function assignmentUrl(source: LockerSource, assignmentId: string): string {
+  return source === 'teacher'
+    ? `${API}/dictation-assignments/${assignmentId}`
+    : `${STUDENT_API}/dictations/${assignmentId}`;
 }
 
-export function savePupilProgress(assignmentId: string, listened: string[]): Promise<void> {
-  return call(`/dictation-assignments/${assignmentId}/progress`, {
+export function pupilDictation(
+  assignmentId: string,
+  source: LockerSource
+): Promise<PupilDictation> {
+  return request(assignmentUrl(source, assignmentId));
+}
+
+export function savePupilProgress(
+  assignmentId: string,
+  listened: string[],
+  source: LockerSource
+): Promise<void> {
+  return request(`${assignmentUrl(source, assignmentId)}/progress`, {
     method: 'PUT',
     body: JSON.stringify({ listened }),
   });
